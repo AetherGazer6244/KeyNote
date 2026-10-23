@@ -52,11 +52,14 @@ public sealed partial class MainWindow : Window
     }
 
     /// 记住窗口位置(config._window_geometry = "x,y,w,h")
+    /// 最小化时 Windows 会把窗口挪到 -32000,此时不保存,避免下次启动恢复到屏幕外
     private void SaveWindowPosition()
     {
         try
         {
             if (!App.Instance.Settings.GetBool("remember_window_pos", true)) return;
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            if (IsIconic(hwnd)) return;
             var p = AppWindow.Position;
             var s = AppWindow.Size;
             App.Instance.Settings.Set("_window_geometry", $"{p.X},{p.Y},{s.Width},{s.Height}");
@@ -68,6 +71,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// 恢复窗口位置:钳制进虚拟屏幕范围,历史坏坐标(如 -32000)不会把窗口挪出屏幕
     private void RestoreWindowPosition()
     {
         try
@@ -80,6 +84,13 @@ public sealed partial class MainWindow : Window
             var x = int.Parse(parts[0]);
             var y = int.Parse(parts[1]);
             // 尺寸固定 800×600(见 ResizeForDpi),这里只恢复位置,不用旧尺寸覆盖
+            var vx = GetSystemMetrics(SmXVirtualScreen);
+            var vy = GetSystemMetrics(SmYVirtualScreen);
+            var cw = GetSystemMetrics(SmCxVirtualScreen);
+            var ch = GetSystemMetrics(SmCyVirtualScreen);
+            var s = AppWindow.Size;
+            x = Math.Clamp(x, vx, Math.Max(vx, vx + cw - s.Width));
+            y = Math.Clamp(y, vy, Math.Max(vy, vy + ch - s.Height));
             AppWindow.Move(new PointInt32(x, y));
         }
         catch (Exception ex)
@@ -309,4 +320,15 @@ public sealed partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern int GetDpiForWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(nint hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    private const int SmXVirtualScreen = 76;
+    private const int SmYVirtualScreen = 77;
+    private const int SmCxVirtualScreen = 78;
+    private const int SmCyVirtualScreen = 79;
 }
