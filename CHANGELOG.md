@@ -2,6 +2,15 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0] - 2026-10-30
+
+界面精简优化。
+
+### 变更
+
+- 统计页:移除键型分布胶囊行(字母 / 数字 / 符号 / 功能键 占比),页面收敛为 KPI 卡 + 趋势图;连带清理 `PillFactory` 与 `KeyNoteDb.KeyTypeDistribution()` 死代码
+- 主窗口:移除 Alt+1~5 切页快捷键,消除悬停内容区时系统自动弹出的加速键气泡(「Alt+1」ToolTip)
+
 ## [1.0.0] - 2026-10-22
 
 首个 WinUI3(C#)重写版。数据库 schema 与配置格式与历史 Python 版完全兼容,覆盖安装即可迁移。

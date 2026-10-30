@@ -9,8 +9,8 @@
 - 双工程:`src/KeyNote.App`(WinUI 壳 + 页面 + 控件)与 `src/KeyNote.Core`(无 UI:设置 / 存储 / 钩子 / 工具)
 - 主窗口硬编码 800×600(按 DPI 缩放),不响应式
 - 布局:48px 通栏标题栏(状态胶囊)+ NavigationView 左侧导航(5 页)+ 内容区,切换走 `App._switch_page` 等价的 `MainWindow.NavigateTo(tag)`
-- 5 页侧边栏导航(Segoe 字形图标 + NavigationView 默认选中态),快捷键 Alt+1~5
-  - Page 1 `StatsPage`(`Views/StatsPage`):页头 + 时间筛选(SelectorBar)+ 3 张 KPI 卡(随筛选口径)+ 键型分布胶囊行 + 趋势图(悬停十字线)
+- 5 页侧边栏导航(Segoe 字形图标 + NavigationView 默认选中态)
+  - Page 1 `StatsPage`(`Views/StatsPage`):页头 + 时间筛选(SelectorBar)+ 3 张 KPI 卡(随筛选口径)+ 趋势图(悬停十字线)
   - Page 2 `KeyboardPage`(`Views/KeyboardPage`):7×24 活跃度热力图 + QWERTY 键盘热力图
   - Page 3 `HeatmapPage`(`Views/HeatmapPage`):GH 年度热力图(列数按 heatmap_days 动态)
   - Page 4 `TopKeysPage`(`Views/TopKeysPage`):Top 10 按键条形图(合并大小写口径)
@@ -27,7 +27,6 @@
 - KPI 卡三层:标签(12 secondary)/ 数值(24 bold)/ 脚注(11 tertiary)
 - 页面骨架:页头(`PageHeader`:标题 18 + 副标题 12 + 右侧"⟳ 刷新"图标+文字钮)→ 筛选/副卡 → 内容卡;空数据画三段式空状态(`Controls/EmptyStateView`:图标字形 + 主文案 + 说明)
 - 趋势图(vigil-watt 电量图签名):2px 圆角线 + 同色 15% 面积 + ≤40 点圆点 + 线端值标签 + 悬停十字虚线/白描边圆点/圆角气泡(`Controls/ChartTip` 气泡)
-- 胶囊(vigil-watt 徽标):语义色文字 + 同色 16% tint 底 `radius 4`(`Helpers/PillFactory`)
 - 设置面板:分组标题带强调色竖条,行内左标题 + 常驻说明 / 右控件,行间 1px 分隔线,底栏固定
 - 新增颜色一律进 `Theme/UiColors.cs` 或 `App.xaml` 资源;页内专属色写模块顶部常量
 - 字号只允许用 `App.xaml` 里的样式令牌(11/12/13/14/15/18/24),code-behind 不写字面量字号
@@ -74,13 +73,12 @@
 ### 5. UI 窗口
 | 文件 | 职责 |
 |---|---|
-| `src/KeyNote.App/MainWindow.xaml(.cs)` | 主窗口(标题栏 + 侧边栏 + 5 页 + Mica + 自动刷新 + 关闭到托盘 + Alt+1~5)|
+| `src/KeyNote.App/MainWindow.xaml(.cs)` | 主窗口(标题栏 + 侧边栏 + 5 页 + Mica + 自动刷新 + 关闭到托盘)|
 | `src/KeyNote.App/App.xaml(.cs)` | 应用根:设置加载 → DB 初始化 → 钩子 → 托盘 → 窗口显隐策略 + 全局异常落盘 |
 | `src/KeyNote.App/Views/*.xaml(.cs)` | 5 个页面 + `IRefreshable` |
 | `src/KeyNote.App/Views/PageRefresh.cs` | 页面刷新接线助手(页头刷新 + 首次加载 + 异常落盘)|
 | `src/KeyNote.App/Controls/*.xaml(.cs)` | KpiCard / PageHeader / TrendChartControl / GhHeatmapControl / HourlyGridControl / KeyboardHeatmapControl / BarChartControl / ChartTip / EmptyStateView |
 | `src/KeyNote.App/Theme/UiColors.cs` | 暗色语义色板(唯一色板真源)|
-| `src/KeyNote.App/Helpers/PillFactory.cs` | 胶囊徽标工厂 |
 | `src/KeyNote.App/Helpers/TrayNative.cs` | 托盘 Win32 互操作层(P/Invoke + 结构体,纯声明)|
 
 ### 6. 系统托盘与应用服务
