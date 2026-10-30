@@ -395,15 +395,4 @@ public static partial class KeyNoteDb
         while (r.Read()) rows.Add((r.GetString(0), r.GetInt64(1)));
         return rows;
     }
-
-    public static List<(string Type, long Count)> KeyTypeDistribution()
-    {
-        var rows = new List<(string, long)>();
-        if (!Ready) return rows;
-        using var cmd = ReadCmd("SELECT type, count FROM agg_key_type_total ORDER BY count DESC");
-        if (cmd is null) return rows;
-        using var r = cmd.ExecuteReader();
-        while (r.Read()) rows.Add((r.GetString(0), r.GetInt64(1)));
-        return rows;
-    }
 }

@@ -25,9 +25,6 @@
                     <controls:KpiCard x:Name="KpiActive" Grid.Column="2" Label="活跃天数" Value="—" />
                 </Grid>
 
-                <!-- 键型分布胶囊行 -->
-                <StackPanel x:Name="TypePillRow" Orientation="Horizontal" Spacing="6" />
-
                 <!-- 趋势图卡 -->
                 <Border Style="{StaticResource AppCardStyle}">
                     <StackPanel Spacing="4">

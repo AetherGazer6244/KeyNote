@@ -1,31 +1,19 @@
 using KeyNote.App.Controls;
-using KeyNote.App.Helpers;
-using KeyNote.App.Theme;
 using KeyNote.Core.Storage;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace KeyNote.App.Views;
 
-/// 统计页(Page 1):3 张 KPI 卡 + 键型分布胶囊 + 按键趋势。
+/// 统计页(Page 1):3 张 KPI 卡 + 按键趋势。
 public sealed partial class StatsPage : Page, IRefreshable
 {
     private const int RangeIdxToday = 0;
     private const int RangeIdxWeek = 1;
     private const int RangeIdxMonth = 2;
 
-    // 键型只统计四类(修饰键不计入统计,只记活跃)
-    private static readonly (string Type, string Label, Windows.UI.Color Color)[] TypeMeta =
-    {
-        ("letter", "字母", UiColors.Accent),
-        ("digit", "数字", UiColors.Success),
-        ("symbol", "符号", UiColors.Warning),
-        ("function", "功能键", UiColors.Offline),
-    };
-
     private int _range = RangeIdxMonth;
     private string? _fp;
-    private string? _typeFp;
 
     public StatsPage()
     {
@@ -56,7 +44,6 @@ public sealed partial class StatsPage : Page, IRefreshable
         KpiMouse.Footnote = MouseFoot();
         KpiActive.Footnote = rangeLabel;
 
-        UpdateTypePills();
         UpdateTrend();
 
         var streak = KeyNoteDb.StreakDays(365);
@@ -137,28 +124,5 @@ public sealed partial class StatsPage : Page, IRefreshable
             _ => rows[0].Button,
         };
         return $"{name} {Math.Round(rows[0].Count / (double)total * 100)}%";
-    }
-
-    private void UpdateTypePills()
-    {
-        var rows = KeyNoteDb.KeyTypeDistribution().ToDictionary(r => r.Type, r => r.Count);
-        var fp = string.Join(",", rows.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}"));
-        if (fp == _typeFp) return;
-        _typeFp = fp;
-
-        var total = rows.Values.Sum();
-        TypePillRow.Children.Clear();
-        if (total <= 0)
-        {
-            TypePillRow.Visibility = Visibility.Collapsed;
-            return;
-        }
-        TypePillRow.Visibility = Visibility.Visible;
-        foreach (var (type, label, color) in TypeMeta)
-        {
-            var count = rows.GetValueOrDefault(type);
-            var pct = Math.Round(count / (double)total * 100);
-            TypePillRow.Children.Add(PillFactory.Create($"{label} {pct}%", color));
-        }
     }
 }
