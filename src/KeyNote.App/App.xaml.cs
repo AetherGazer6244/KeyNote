@@ -45,12 +45,6 @@ public partial class App : Application
         }
     }
 
-    /// Alt+1~5 快捷键(页内切换)
-    public void ApplyHotkeySettings()
-    {
-        // 快捷键在 MainWindow 构造时注册,此处仅保留钩子以便设置变更时刷新
-    }
-
     /// 闲置自动暂停
     public void ApplyIdlePause(int minutes)
     {

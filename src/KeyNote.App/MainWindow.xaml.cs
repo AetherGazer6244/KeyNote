@@ -5,7 +5,6 @@ using KeyNote.App.Services;
 using KeyNote.App.Theme;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 using Microsoft.UI.Windowing;
@@ -32,7 +31,6 @@ public sealed partial class MainWindow : Window
 
         ContentFrame.Navigate(typeof(Views.StatsPage));
         Nav.SelectedItem = Nav.MenuItems[0];
-        RegisterHotkeys();
 
         // 自动刷新:只刷当前页(设置页不实现 IRefreshable,自然跳过)
         _refreshTimer = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -100,27 +98,6 @@ public sealed partial class MainWindow : Window
     }
 
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer? _refreshTimer;
-
-    /// Alt+1~5 切页
-    private void RegisterHotkeys()
-    {
-        var tags = new[] { "stats", "keyboard", "heatmap", "topkeys", "settings" };
-        for (var i = 0; i < tags.Length; i++)
-        {
-            var tag = tags[i];
-            var accel = new KeyboardAccelerator
-            {
-                Key = Windows.System.VirtualKey.Number1 + i,
-                Modifiers = Windows.System.VirtualKeyModifiers.Menu,
-            };
-            accel.Invoked += (_, e) =>
-            {
-                e.Handled = true;
-                NavigateTo(tag);
-            };
-            Content.KeyboardAccelerators.Add(accel);
-        }
-    }
 
     /// 内容区不透明度(WinUI3 非打包窗口不支持整窗透明)
     public void SetContentOpacity(double alpha)

@@ -316,7 +316,6 @@ public sealed partial class SettingsPage : Page
             KeyNoteDb.SetRetentionDays(cfg.RetentionDays);
             KeyNoteDb.SetBackupDir(cfg.GetString("backup_dir"));
             App.Instance.ApplyWindowAlpha(cfg.GetDouble("window_alpha", 1.0));
-            App.Instance.ApplyHotkeySettings();
             App.Instance.ApplyIdlePause(cfg.GetInt("idle_pause_min", 0));
             if (WindowService.Current is MainWindow mw)
             {
