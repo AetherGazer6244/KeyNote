@@ -51,7 +51,8 @@ public sealed partial class SettingsPage : Page
         foreach (var (groupName, fields) in Groups)
         {
             var normal = fields.Where(f => !f.Advanced).ToArray();
-            var advanced = fields.Where(f => f.Advanced).ToArray();
+            // 整组归入高级区后常规项为空(如「数据」),常规区不出卡
+            if (normal.Length == 0) continue;
 
             var card = new Border
             {
@@ -88,72 +89,7 @@ public sealed partial class SettingsPage : Page
             titleRow.Children.Add(title);
             stack.Children.Add(titleRow);
 
-            AppendRows(stack, normal, trailingSeparator: advanced.Length > 0, group: card);
-
-            // 高级设置折叠区(默认折叠)
-            if (advanced.Length > 0)
-            {
-                var advHost = new StackPanel { Visibility = Visibility.Collapsed };
-                AppendRows(advHost, advanced, trailingSeparator: false, group: card);
-
-                var chevron = new TextBlock
-                {
-                    FontFamily = new FontFamily("Segoe Fluent Icons"),
-                    Text = "\uE76C", // ChevronRight
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                var advTitle = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                advTitle.Children.Add(chevron);
-                advTitle.Children.Add(new TextBlock
-                {
-                    Text = "高级设置",
-                    FontSize = 13,
-                    Foreground = new SolidColorBrush(Theme.UiColors.FgSecondary),
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-                advTitle.Children.Add(new TextBlock
-                {
-                    Text = $"{advanced.Length} 项",
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-                // 用 Button 而非 Grid+PointerPressed:键盘可达(读屏与 Tab 都能用)
-                var advHeader = new Button
-                {
-                    Content = advTitle,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
-                    Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
-                    Padding = new Thickness(14, 10, 14, 10),
-                    BorderThickness = new Thickness(0),
-                };
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(advHeader, "高级设置(展开/折叠)");
-                advHeader.Click += (_, _) =>
-                {
-                    var idx = _advSections.FindIndex(s => s.Host == advHost);
-                    _advOpen[idx] = !_advOpen[idx];
-                    // 记录用户手动状态,搜索清空后据此恢复
-                    if (idx < _advUserState.Count) _advUserState[idx] = _advOpen[idx];
-                    ApplyAdvState(idx);
-                };
-
-                stack.Children.Add(advHeader);
-                stack.Children.Add(advHost);
-
-                var idx = _advSections.Count;
-                _advSections.Add((advHost, chevron));
-                _advOpen.Add(false);
-                _advUserState.Add(false);
-                ApplyAdvState(idx);
-            }
+            AppendRows(stack, normal, trailingSeparator: false, group: card);
 
             // 关于组:追加「发现新版」提示行(默认隐藏,检查到新版才显示)
             if (groupName == "关于")
@@ -169,6 +105,81 @@ public sealed partial class SettingsPage : Page
 
             card.Child = stack;
             GroupsHost.Children.Add(card);
+        }
+
+        // 统一「高级设置」折叠卡:全页高级项收拢于此(默认折叠),置于所有分组之后
+        var advanced = Groups.SelectMany(g => g.Fields).Where(f => f.Advanced).ToArray();
+        if (advanced.Length > 0)
+        {
+            var advCard = new Border
+            {
+                Style = (Style)Application.Current.Resources["AppCardStyle"],
+                Padding = new Thickness(0),
+            };
+            var advStack = new StackPanel();
+            var advHost = new StackPanel { Visibility = Visibility.Collapsed };
+            AppendRows(advHost, advanced, trailingSeparator: false, group: advCard);
+
+            var chevron = new TextBlock
+            {
+                FontFamily = new FontFamily("Segoe Fluent Icons"),
+                Text = "\uE76C", // ChevronRight
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var advTitle = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            advTitle.Children.Add(chevron);
+            advTitle.Children.Add(new TextBlock
+            {
+                Text = "高级设置",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Theme.UiColors.FgSecondary),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            advTitle.Children.Add(new TextBlock
+            {
+                Text = $"{advanced.Length} 项",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            // 用 Button 而非 Grid+PointerPressed:键盘可达(读屏与 Tab 都能用)
+            var advHeader = new Button
+            {
+                Content = advTitle,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                Padding = new Thickness(14, 10, 14, 10),
+                BorderThickness = new Thickness(0),
+            };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(advHeader, "高级设置(展开/折叠)");
+            advHeader.Click += (_, _) =>
+            {
+                var idx = _advSections.FindIndex(s => s.Host == advHost);
+                _advOpen[idx] = !_advOpen[idx];
+                // 记录用户手动状态,搜索清空后据此恢复
+                if (idx < _advUserState.Count) _advUserState[idx] = _advOpen[idx];
+                ApplyAdvState(idx);
+            };
+
+            advStack.Children.Add(advHeader);
+            advStack.Children.Add(advHost);
+
+            var advIdx = _advSections.Count;
+            _advSections.Add((advHost, chevron));
+            _advOpen.Add(false);
+            _advUserState.Add(false);
+            ApplyAdvState(advIdx);
+
+            advCard.Child = advStack;
+            GroupsHost.Children.Add(advCard);
         }
 
         if (UpdateService.LastResult is { } last) ApplyUpdateResult(last);

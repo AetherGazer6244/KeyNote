@@ -42,8 +42,8 @@ public sealed partial class SettingsPage
         }),
         ("数据", new[]
         {
-            new FieldSpec(FieldKind.Action, "backup_now", "立即备份", "对当前数据库做一致性快照。", ActionKey: "backup"),
-            new FieldSpec(FieldKind.Action, "export_csv", "导出 CSV", "导出最近 30 天原始按键记录到数据目录。", ActionKey: "csv"),
+            new FieldSpec(FieldKind.Action, "backup_now", "立即备份", "对当前数据库做一致性快照。", ActionKey: "backup", Advanced: true),
+            new FieldSpec(FieldKind.Action, "export_csv", "导出 CSV", "导出最近 30 天原始按键记录到数据目录。", ActionKey: "csv", Advanced: true),
             new FieldSpec(FieldKind.Combo, "db_retention_days", "保留 raw 数据", "原始按键记录的保留时长,到期自动清理(聚合表永久保留)。",
                 Options: ["永久", "7 天", "180 天", "365 天", "730 天"], Advanced: true),
             new FieldSpec(FieldKind.Path, "backup_dir", "备份目录", "备份 .db 文件的目标目录,空 = 使用数据目录下的 backups/。", Advanced: true),
