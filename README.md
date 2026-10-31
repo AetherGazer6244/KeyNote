@@ -26,9 +26,8 @@
 - **应用内更新检查**(`UpdateService`)
   - 设置页「关于」分组「检查更新」+ 托盘「🔄 检查更新」;启动后每日静默检查一次(24h 判重)
   - 比对 GitHub Releases 最新稳定版与当前程序集版本(组件式比较,同版本不误报;预发布/草稿版自动排除)
-  - **发现新版 → 托盘气泡提示 → 点气泡 → 确认框(版本对比 + 更新说明)→ 应用内下载安装包 → 自动替换并重启**
-  - 便携版运行副本无法自动安装(没有安装器可替换自己),改为提示并打开下载页
-  - 不引入更新框架依赖(不用 Squirrel/Velopack)
+   - **发现新版 → 托盘气泡提示 → 点气泡 → 确认框(版本对比 + 更新说明)→ 应用内下载安装包 → 自动替换并重启**
+   - 不引入更新框架依赖(不用 Squirrel/Velopack)
 - **数据隐私**
   - 只记录按键名 + 时间戳,**不记录**窗口 / 应用名 / 剪贴板 / 按键上下文
   - 数据完全本地,默认存到 `%LOCALAPPDATA%\KeyNote\`
@@ -37,16 +36,9 @@
 
 运行 `KeyNote_Setup.exe` 安装即可,无需管理员权限、无需 UAC。
 
-> 便携版:直接运行 `dist/KeyNote.App.exe`;在同目录放一个 `portable.flag` 可让数据落在该目录。
-
 ## 数据存储位置
 
-| 来源 | 存储目录 |
-|---|---|
-| 安装版(推荐) | `%LOCALAPPDATA%\KeyNote\` |
-| 便携版(同目录 `portable.flag`) | KeyNote.App.exe 同级目录 |
-
-目录内含 `keynote.db`(数据)/ `config.json`(配置)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
+数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(数据)/ `config.json`(配置)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
 
 ## 运行(开发模式)
 
@@ -64,10 +56,10 @@ src/KeyNote.App/bin/x64/Debug/net8.0-windows10.0.19041.0/win-x64/KeyNote.App.exe
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-一键完成:杀残留实例 → 备份便携版用户数据 → `dotnet publish`(Release/x64)→ 发布瘦身(去 pdb、裁卫星语言目录)→ 还原用户数据(校验通过才删备份)→ 体积构成报告 → Inno Setup 编译安装包。产出:
+一键完成:杀残留实例 → 备份旧 dist 用户数据(若有)→ `dotnet publish`(Release/x64)→ 发布瘦身(去 pdb、裁卫星语言目录)→ 还原用户数据(校验通过才删备份)→ 体积构成报告 → Inno Setup 编译安装包。产出:
 
-- `dist\` — 便携版(~95MB,其中约 88MB 是 Windows App SDK 运行时)
-- `installer\KeyNote_Setup.exe` — 安装包(22MB)
+- `dist\` — 本地构建产物,仅本机运行用,不对外发布(~95MB,其中约 88MB 是 Windows App SDK 运行时)
+- `installer\KeyNote_Setup.exe` — 安装包(22MB),对外发布的唯一载体
 
 > 打包源是干净 staging(`build\setup_stage`),**不会把用户数据打进安装包**。
 > 本机 Inno Setup 6 安装于 `%LOCALAPPDATA%\Programs\Inno Setup 6\`(不在 PATH);缺失时脚本以 exit 2 结束并提示。
@@ -100,7 +92,7 @@ key_note/
 ├── build.ps1             # 一键构建:publish → 瘦身 → 体积报告 → 安装包 → dist/
 ├── KeyNote_Setup.iss     # Inno Setup 安装脚本
 ├── icon.ico              # 应用 / 托盘图标(蓝色圆环)
-├── dist/                 # 便携版产物(构建产物,不入库)
+├── dist/                 # 本地构建产物(不入库,不发布)
 └── installer/            # Inno Setup 产物(构建产物,不入库)
 ```
 
@@ -149,7 +141,7 @@ key_note/
 ### 发布流程
 
 1. 改 `src/KeyNote.App/KeyNote.App.csproj` 的 `<Version>`(安装包版本由 `build.ps1` 派生,不必手改 `.iss`)
-2. `powershell -ExecutionPolicy Bypass -File build.ps1` → 产出 `dist\`(便携)与 `installer\KeyNote_Setup.exe`
+2. `powershell -ExecutionPolicy Bypass -File build.ps1` → 产出 `dist\` 与 `installer\KeyNote_Setup.exe`
 3. `git tag v1.0.1 && git push --tags`
 4. 在 GitHub 仓库创建 Release:tag 选 `v1.0.1`,上传 `installer\KeyNote_Setup.exe` 作为资产,notes 抄 `CHANGELOG.md` 对应小节
 5. 应用内「检查更新」即可发现新版本(资产名需为 `KeyNote_Setup.exe`;无该资产时仍可打开 Release 页手动下载)
