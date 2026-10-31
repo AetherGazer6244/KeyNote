@@ -86,7 +86,7 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 
 ## 配置(config.json)
 
-常规配置全部在设置页修改、保存即生效(自启 / 静默启动 / 关闭到托盘 / 闲置暂停 / 透明度 / 保留天数 / 备份目录等)。少数底层项仅可手编 `config.json`:`data_dir`(数据目录,重启生效)、`db_flush_batch_size` / `db_flush_interval_sec`(写盘节奏)、`db_auto_backup_days`(自动备份周期)。
+常规配置全部在设置页修改、保存即生效(自启 / 静默启动 / 关闭到托盘 / 保留天数 / 备份目录等,数据类操作收在「高级设置」折叠区)。少数底层项仅可手编 `config.json`:`data_dir`(数据目录,重启生效)、`db_flush_batch_size` / `db_flush_interval_sec`(写盘节奏)、`db_auto_backup_days`(自动备份周期),以及已从界面移除的 `listener_enabled` / `mouse_listener_enabled` / `idle_pause_min` / `window_alpha` / `heatmap_days` / `refresh_interval_sec`(行为按现有配置值运行)。
 
 ## 项目结构
 

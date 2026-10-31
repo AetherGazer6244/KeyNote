@@ -353,24 +353,14 @@ public sealed partial class SettingsPage : Page
             cfg.Set("hide_tray_icon", false);
             cfg.Set("start_minimized", false);
             cfg.Set("close_to_tray", true);
-            cfg.Set("listener_enabled", true);
-            cfg.Set("mouse_listener_enabled", true);
-            cfg.Set("idle_pause_min", 0);
-            cfg.Set("window_alpha", 1.0);
             cfg.Set("remember_window_pos", true);
-            cfg.Set("heatmap_days", 365);
-            cfg.Set("refresh_interval_sec", 5);
             cfg.Set("db_retention_days", 365);
             cfg.Set("backup_dir", "");
             cfg.Save();
 
+            // 恢复默认必须同步运行时状态,否则旧值继续生效
             AutostartService.SetEnabled(false);
-            App.Instance.Hooks.Resume();
-            App.Instance.Hooks.ResumeMouse();
             KeyNoteDb.SetRetentionDays(365);
-            App.Instance.ApplyWindowAlpha(1.0);
-            // 恢复默认必须同步运行时状态,否则旧值继续生效(如闲置暂停仍按旧分钟数)
-            App.Instance.ApplyIdlePause(0);
             App.Instance.Tray.SetVisible(true);
             if (WindowService.Current is MainWindow mw)
             {

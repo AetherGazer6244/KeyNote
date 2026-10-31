@@ -29,16 +29,10 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "start_minimized", "启动时最小化", "开机后直接驻留托盘,不弹出主窗口。"),
             new FieldSpec(FieldKind.Switch, "close_to_tray", "关闭窗口到托盘", "点关闭按钮时最小化到托盘而不是退出程序。"),
             new FieldSpec(FieldKind.Switch, "hide_tray_icon", "隐藏托盘图标", "隐藏后重启仍保持隐藏;打开主窗口,回到本页关闭此项即可恢复显示。", Advanced: true),
-            new FieldSpec(FieldKind.Switch, "listener_enabled", "启动时启动监听", "关闭后不再记录按键;重新打开会立即开始记录,无需重启。", Advanced: true),
-            new FieldSpec(FieldKind.Switch, "mouse_listener_enabled", "记录鼠标点击", "后台记录鼠标左/右/中键与侧键(X1/X2)点击次数;关闭后立即停止。", Advanced: true),
-            new FieldSpec(FieldKind.Number, "idle_pause_min", "闲置自动暂停(分钟)", "无键盘/鼠标活动超过该时长后自动暂停记录,0 = 不暂停。", 0, 240, 1, Advanced: true),
         }),
         ("界面", new[]
         {
             new FieldSpec(FieldKind.Switch, "remember_window_pos", "记住窗口位置", "记住主窗口位置,下次启动恢复。"),
-            new FieldSpec(FieldKind.Slider, "window_alpha", "内容透明度", "WinUI3 非打包窗口不支持整窗透明,该滑块调节内容与卡片的不透明度。", 0.6, 1.0, 0.05, Advanced: true),
-            new FieldSpec(FieldKind.Number, "heatmap_days", "热力图天数", "年度热力图统计的天数范围。", 30, 730, 1, Advanced: true),
-            new FieldSpec(FieldKind.Number, "refresh_interval_sec", "自动刷新间隔(秒)", "当前页数据的自动刷新间隔。", 2, 120, 1, Advanced: true),
         }),
         ("数据", new[]
         {
