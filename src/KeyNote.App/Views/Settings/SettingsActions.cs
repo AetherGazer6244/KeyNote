@@ -88,9 +88,6 @@ public sealed partial class SettingsPage
                     }
                     break;
                 }
-                case "quit":
-                    App.Instance.Quit();
-                    break;
             }
         }
         catch (Exception ex)
