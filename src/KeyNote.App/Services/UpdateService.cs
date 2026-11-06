@@ -32,8 +32,8 @@ public static class UpdateService
 
     /// 列表端点:空仓库返回 [] 。
     /// 不用 /releases/latest —— 仓库一个 Release 都没有时它返回 404,会被误报成「检查失败」。
-    private const string ApiUrl = "https://api.github.com/repos/Cecilian-Elysian/Key_Note/releases";
-    private const string RepoUrl = "https://github.com/Cecilian-Elysian/Key_Note/releases";
+    private const string ApiUrl = "https://api.github.com/repos/AetherGazer6244/KeyNote/releases";
+    private const string RepoUrl = "https://github.com/AetherGazer6244/KeyNote/releases";
     private const string AssetName = "KeyNote_Setup.exe";
 
     private static readonly HttpClient Http = CreateClient();
