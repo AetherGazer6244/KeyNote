@@ -87,7 +87,7 @@ key_note/
 ├── KeyNote.sln           # 解决方案
 ├── CHANGELOG.md          # 版本变更记录(Release notes 来源)
 ├── src/
-│   ├── KeyNote.App/      # WinUI3 壳:App / MainWindow / 5 页 / 9 控件 / 8 服务
+│   ├── KeyNote.App/      # WinUI3 壳:App / MainWindow / 5 页 / 9 控件 / 9 服务
 │   └── KeyNote.Core/     # 无 UI:AppSettings / KeyNoteDb(4 分部) / InputHookService / AppPaths / CrashLog
 ├── build.ps1             # 一键构建:publish → 瘦身 → 体积报告 → 安装包 → dist/
 ├── KeyNote_Setup.iss     # Inno Setup 安装脚本
@@ -128,7 +128,7 @@ key_note/
 
 ## 路线图
 
-- [x] **应用内更新检查**:对接 GitHub Releases(`Cecilian-Elysian/Key_Note`)
+- [x] **应用内更新检查**:对接 GitHub Releases(`AetherGazer6244/KeyNote`)
   - 设置页「关于」分组「检查更新」+ 托盘「🔄 检查更新」,启动后每日静默检查一次
   - 比对最新稳定版与当前程序集版本(预发布/草稿排除);发现新版 → 托盘气泡 → 确认框 → 应用内下载 → 自动替换并重启
   - 实现见 `Services/UpdateService.cs` / `UpdateInstaller.cs` / `UpdatePrompt.cs`;不引入更新框架依赖(不用 Squirrel/Velopack)
@@ -142,8 +142,8 @@ key_note/
 
 1. 改 `src/KeyNote.App/KeyNote.App.csproj` 的 `<Version>`(安装包版本由 `build.ps1` 派生,不必手改 `.iss`)
 2. `powershell -ExecutionPolicy Bypass -File build.ps1` → 产出 `dist\` 与 `installer\KeyNote_Setup.exe`
-3. `git tag v1.0.1 && git push --tags`
-4. 在 GitHub 仓库创建 Release:tag 选 `v1.0.1`,上传 `installer\KeyNote_Setup.exe` 作为资产,notes 抄 `CHANGELOG.md` 对应小节
+3. `git tag v1.1.4 && git push --tags`
+4. 在 GitHub 仓库创建 Release:tag 选 `v1.1.4`,上传 `installer\KeyNote_Setup.exe` 作为资产,notes 抄 `CHANGELOG.md` 对应小节
 5. 应用内「检查更新」即可发现新版本(资产名需为 `KeyNote_Setup.exe`;无该资产时仍可打开 Release 页手动下载)
 
 ## 参与开发
