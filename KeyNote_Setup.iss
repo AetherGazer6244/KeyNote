@@ -14,8 +14,10 @@ AppPublisher=KeyNote Project
 ; 显式 AppId:升级链依赖它稳定(隐式取 AppName,改名即断链)
 AppId=KeyNote
 DefaultDirName={localappdata}\KeyNote
-; auto:首装显示目录页,升级(同 AppId)隐藏并沿用旧目录
-DisableDirPage=auto
+; no:目录页始终显示 —— 首装可选位置,升级预填旧目录亦可改
+; (auto 会因检测到旧安装直接跳页,用户无法自选位置)
+; 静默安装(应用内更新)不显示向导页,目录由 /DIR= 锁定
+DisableDirPage=no
 UsePreviousAppDir=yes
 MinVersion=10.0.19041
 DefaultGroupName=KeyNote
@@ -62,6 +64,27 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 Filename: "{app}\KeyNote.App.exe"; Description: "启动 KeyNote"; Flags: postinstall nowait skipifsilent shellexec
 
 [Code]
+// 旧安装目录(取自上次安装的卸载信息;空 = 首装),升级换目录时用于提示
+var
+  PrevInstallDir: String;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  PrevInstallDir := '';
+  // PrivilegesRequired=lowest 卸载信息在 HKCU;手工提权安装过的机器兜底查 HKLM64
+  if not RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\KeyNote_is1',
+    'InstallLocation', PrevInstallDir) then
+    if not RegQueryStringValue(HKLM64, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\KeyNote_is1',
+      'InstallLocation', PrevInstallDir) then
+      PrevInstallDir := '';
+end;
+
+function SameDir(const A, B: String): Boolean;
+begin
+  Result := CompareText(RemoveBackslashUnlessRoot(A), RemoveBackslashUnlessRoot(B)) = 0;
+end;
+
 // 目录可写性校验:PrivilegesRequired=lowest 下写不进系统目录(如 Program Files),
 // 提前在目录页拦截给中文提示,而不是等复制文件阶段报 Access Denied
 function IsDirWritable(const ADir: String): Boolean;
@@ -104,6 +127,16 @@ begin
         '(按键记录等数据不受影响,始终保存在 %LOCALAPPDATA%\KeyNote)',
         mbError, MB_OK);
       Result := False;
+      Exit;
+    end;
+    // 升级时换了安装目录:旧目录不会自动清理,提示确认
+    if (PrevInstallDir <> '') and (not SameDir(WizardDirValue, PrevInstallDir)) then
+    begin
+      if MsgBox('检测到旧版本安装在:' + #13#10 + PrevInstallDir + #13#10#13#10 +
+        '本次将安装到:' + #13#10 + WizardDirValue + #13#10#13#10 +
+        '旧目录不会被自动清理,建议改目录前先卸载旧版本。仍要继续吗?',
+        mbConfirmation, MB_YESNO) = IDNO then
+        Result := False;
     end;
   end;
 end;
