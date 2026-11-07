@@ -85,6 +85,22 @@ begin
   Result := CompareText(RemoveBackslashUnlessRoot(A), RemoveBackslashUnlessRoot(B)) = 0;
 end;
 
+// 接管目录页「浏览」按钮:换用 NewFolderStyle 对话框,自带「新建文件夹」按钮
+// (内置浏览对话框部分版本不带建目录按钮;手动在路径框输不存在的路径也可以,安装时会自动创建)
+procedure DirBrowseClick(Sender: TObject);
+var
+  Dir: String;
+begin
+  Dir := WizardDirValue;
+  if BrowseForFolder('请选择 KeyNote 的安装目录(可新建文件夹):', Dir, True) then
+    WizardForm.DirEdit.Text := Dir;
+end;
+
+procedure InitializeWizard();
+begin
+  WizardForm.DirBrowseButton.OnClick := @DirBrowseClick;
+end;
+
 // 目录可写性校验:PrivilegesRequired=lowest 下写不进系统目录(如 Program Files),
 // 提前在目录页拦截给中文提示,而不是等复制文件阶段报 Access Denied
 function IsDirWritable(const ADir: String): Boolean;
