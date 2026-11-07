@@ -32,12 +32,14 @@ public static class UpdateInstaller
     }
 
     /// 拉起安装器静默升级:安装器会用 Restart Manager 关掉正在运行的我们并替换文件,装完自动重启。
+    /// 显式传 /DIR 锁定当前安装目录:注册表 InstallLocation 缺失(换用户/清理残留)时,
+    /// 防止静默更新装回默认目录产生第二份副本。
     public static void LaunchInstaller(string installerPath)
     {
         var psi = new ProcessStartInfo(installerPath)
         {
             UseShellExecute = true,
-            Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART",
+            Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR=\"{UpdateService.AppDir}\"",
         };
         Process.Start(psi);
     }
