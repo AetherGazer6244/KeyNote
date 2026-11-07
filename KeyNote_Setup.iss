@@ -60,3 +60,50 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\KeyNote.App.exe"; Description: "启动 KeyNote"; Flags: postinstall nowait skipifsilent shellexec
+
+[Code]
+// 目录可写性校验:PrivilegesRequired=lowest 下写不进系统目录(如 Program Files),
+// 提前在目录页拦截给中文提示,而不是等复制文件阶段报 Access Denied
+function IsDirWritable(const ADir: String): Boolean;
+var
+  Parent: String;
+  TestFile: String;
+begin
+  Result := False;
+  if ADir = '' then Exit;
+  if not DirExists(ADir) then
+  begin
+    // 目录还不存在:向上找最近一级已存在祖先来试写
+    Parent := ExtractFileDir(ADir);
+    if (Parent = '') or (Parent = ADir) then
+    begin
+      Result := True;   // 已到盘符根,交由安装阶段处理
+      Exit;
+    end;
+    Result := IsDirWritable(Parent);
+    Exit;
+  end;
+  // 目录已存在:直接试写一个临时文件
+  TestFile := AddBackslash(ADir) + 'keynote_wtest.tmp';
+  if SaveStringToFile('t', TestFile, False) then
+  begin
+    Result := True;
+    DeleteFile(TestFile);
+  end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = wpSelectDir then
+  begin
+    if not IsDirWritable(WizardDirValue) then
+    begin
+      MsgBox('所选目录不可写(通常需要管理员权限)。' + #13#10#13#10 +
+        '请改选一个当前用户可写的目录,例如 D:\Apps\KeyNote。' + #13#10 +
+        '(按键记录等数据不受影响,始终保存在 %LOCALAPPDATA%\KeyNote)',
+        mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
