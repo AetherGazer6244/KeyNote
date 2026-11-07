@@ -36,6 +36,9 @@
 
 运行 `KeyNote_Setup.exe` 安装即可,无需管理员权限、无需 UAC。
 
+- **安装位置可选**:首次安装时在向导里改目录(任意当前用户可写的位置,如 `D:\Apps\KeyNote`);选到 `C:\Program Files` 等需要管理员权限的目录会被拦下并提示;之后升级自动沿用原目录,应用内更新也会锁回同一目录。
+- 数据不跟安装位置走,始终在 `%LOCALAPPDATA%\KeyNote\`(见下节)。
+
 ## 数据存储位置
 
 数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(数据)/ `config.json`(配置)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
@@ -142,8 +145,8 @@ key_note/
 
 1. 改 `src/KeyNote.App/KeyNote.App.csproj` 的 `<Version>`(安装包版本由 `build.ps1` 派生,不必手改 `.iss`)
 2. `powershell -ExecutionPolicy Bypass -File build.ps1` → 产出 `dist\` 与 `installer\KeyNote_Setup.exe`
-3. `git tag v1.1.4 && git push --tags`
-4. 在 GitHub 仓库创建 Release:tag 选 `v1.1.4`,上传 `installer\KeyNote_Setup.exe` 作为资产,notes 抄 `CHANGELOG.md` 对应小节
+3. `git tag v1.1.5 && git push --tags`
+4. 在 GitHub 仓库创建 Release:tag 选 `v1.1.5`,上传 `installer\KeyNote_Setup.exe` 作为资产,notes 抄 `CHANGELOG.md` 对应小节
 5. 应用内「检查更新」即可发现新版本(资产名需为 `KeyNote_Setup.exe`;无该资产时仍可打开 Release 页手动下载)
 
 ## 参与开发

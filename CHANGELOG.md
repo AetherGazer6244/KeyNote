@@ -2,6 +2,15 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.5] - 2026-11-07
+
+安装位置改为可选。
+
+### 变更
+
+- 安装器:首装目录页对所选位置做可写性前置校验,选到 `C:\Program Files` 等需管理员权限的目录时给中文提示(免 UAC 路线不变,数据仍固定在 `%LOCALAPPDATA%\KeyNote`)
+- 应用内静默更新:显式传 `/DIR` 锁定当前安装目录,防止注册表 `InstallLocation` 缺失时新版装回默认目录产生第二份副本
+
 ## [1.1.4] - 2026-11-06
 
 修复更新检查仓库地址,补齐文档计数与版本示例。
