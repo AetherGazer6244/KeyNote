@@ -37,17 +37,28 @@ public sealed partial class StatsPage : Page, IRefreshable
         var days = RangeDays(_range);
         var rangeLabel = RangeLabel(_range);
 
-        KpiTotal.Value = KeyNoteDb.CountKeysSince(days).ToString("N0");
+        var keys = KeyNoteDb.CountKeysSince(days);
+        var total = KeyNoteDb.CountTotal();
+        var active = KeyNoteDb.DailyActiveDays(days);
+        var streak = KeyNoteDb.StreakDays(365);
+
+        // KPI 标签跟随时间范围,避免「选今日却显示累计」的名实不符
+        KpiTotal.Label = $"{rangeLabel}按键";
+        KpiTotal.Value = keys.ToString("N0");
+        KpiTotal.Footnote = days == 1
+            ? $"全时累计 {total:N0}"
+            : $"日均 {keys / (double)days:N0} · 全时累计 {total:N0}";
         KpiMouse.Value = KeyNoteDb.MouseSince(days).ToString("N0");
-        KpiActive.Value = KeyNoteDb.DailyActiveDays(days).ToString("N0");
-        KpiTotal.Footnote = $"全时累计 {KeyNoteDb.CountTotal():N0}";
-        KpiMouse.Footnote = MouseFoot();
-        KpiActive.Footnote = rangeLabel;
+        KpiMouse.Footnote = $"全时 {MouseFoot()}";
+        KpiActive.Value = active.ToString("N0");
+        KpiActive.Footnote = $"活跃率 {active * 100.0 / days:0}%";
 
         UpdateTrend();
 
-        var streak = KeyNoteDb.StreakDays(365);
-        Header.Subtitle = streak > 0 ? $"已连续记录 {streak} 天" : "暂无历史记录";
+        var avgText = days == 1 ? "" : $" · 日均 {keys / (double)days:N0}";
+        Header.Subtitle = streak > 0
+            ? $"已连续记录 {streak} 天{avgText}"
+            : total > 0 ? "暂无连续记录" : "暂无历史记录";
     }
 
     /// 时间范围 → 天数

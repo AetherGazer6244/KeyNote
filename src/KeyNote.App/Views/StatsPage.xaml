@@ -18,11 +18,13 @@
                     <SelectorBarItem x:Name="RangeMonth" Text="近 30 天" IsSelected="True" />
                 </SelectorBar>
 
-                <!-- 3 张 KPI 卡 -->
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                    <controls:KpiCard x:Name="KpiTotal" Grid.Column="0" Label="累计按键" Value="—" />
-                    <controls:KpiCard x:Name="KpiMouse" Grid.Column="1" Label="鼠标点击" Value="—" />
-                    <controls:KpiCard x:Name="KpiActive" Grid.Column="2" Label="活跃天数" Value="—" />
+                <!-- KPI 卡:1 大(hero) + 2 小 -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <controls:KpiCard x:Name="KpiTotal" Grid.Column="0" IsHero="True" Label="近 30 天按键" Value="—" />
+                    <Grid Grid.Column="1" RowDefinitions="*,*" RowSpacing="10">
+                        <controls:KpiCard x:Name="KpiMouse" Grid.Row="0" Label="鼠标点击" Value="—" />
+                        <controls:KpiCard x:Name="KpiActive" Grid.Row="1" Label="活跃天数" Value="—" />
+                    </Grid>
                 </Grid>
 
                 <!-- 趋势图卡 -->
