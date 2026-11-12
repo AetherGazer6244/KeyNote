@@ -20,5 +20,6 @@ public sealed partial class TopKeysPage : Page, IRefreshable
         var data = KeyNoteDb.TopKeysMergedCase(10);
         Chart.SetData(data);
         Summary.Text = data.Count > 0 ? $"最高 {data[0].Key.ToUpperInvariant()} × {data[0].Count:N0}" : "";
+        Header.Subtitle = data.Count > 0 ? "全部时间 · 按使用频次排序" : "暂无记录";
     }
 }

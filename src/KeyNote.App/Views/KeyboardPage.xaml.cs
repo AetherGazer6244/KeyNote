@@ -8,6 +8,8 @@ namespace KeyNote.App.Views;
 /// 后台页(Page 2):7×24 小时活跃度 + QWERTY 键盘热力图。
 public sealed partial class KeyboardPage : Page, IRefreshable
 {
+    private static readonly string[] CnWeekdays = { "一", "二", "三", "四", "五", "六", "日" };
+
     private string? _kbFp;
 
     public KeyboardPage()
@@ -31,6 +33,8 @@ public sealed partial class KeyboardPage : Page, IRefreshable
         var total = 0;
         var active = 0;
         var peak = 0;
+        var peakDow = -1;
+        var peakHour = -1;
         for (var d = 0; d < 7; d++)
         {
             for (var h = 0; h < 24; h++)
@@ -38,10 +42,18 @@ public sealed partial class KeyboardPage : Page, IRefreshable
                 var v = grid[d, h];
                 total += v;
                 if (v > 0) active++;
-                if (v > peak) peak = v;
+                if (v > peak)
+                {
+                    peak = v;
+                    peakDow = d;
+                    peakHour = h;
+                }
             }
         }
-        HourlySummary.Text = $"活跃 {active}/168 桶 · 峰值 {peak:N0}";
+        HourlySummary.Text = $"有记录 {active}/168 时段 · 峰值 {peak:N0}";
+        Header.Subtitle = peak > 0
+            ? $"近 7 天最活跃 周{CnWeekdays[peakDow]} {peakHour}:00 · 峰值 {peak:N0}"
+            : "暂无记录";
     }
 
     private void UpdateKeyboard()

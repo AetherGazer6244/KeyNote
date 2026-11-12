@@ -17,7 +17,6 @@ public sealed partial class HeatmapPage : Page, IRefreshable
     public void RefreshData()
     {
         var days = App.Instance.Settings.HeatmapDays;
-        Header.Subtitle = $"最近 {days} 天的按键分布";
 
         var (daily, start, end) = KeyNoteDb.HeatmapYearly(days);
         Heatmap.SetData(daily, start, end);
@@ -25,5 +24,26 @@ public sealed partial class HeatmapPage : Page, IRefreshable
         Heatmap.Height = Heatmap.DesiredHeight;
         YearTitle.Text = $"过去 {days} 天 · 每日贡献";
         YearSummary.Text = Heatmap.Summary;
+
+        // 页头副标题写结论:活跃天数 + 最长连续
+        var activeDays = 0;
+        var longest = 0;
+        var cur = 0;
+        foreach (var v in daily)
+        {
+            if (v > 0)
+            {
+                activeDays++;
+                cur++;
+                if (cur > longest) longest = cur;
+            }
+            else
+            {
+                cur = 0;
+            }
+        }
+        Header.Subtitle = activeDays > 0
+            ? $"活跃 {activeDays} 天 · 最长连续 {longest} 天"
+            : "暂无记录";
     }
 }
