@@ -8,6 +8,10 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- 字体钉死 Segoe UI:Win10 没有 Segoe UI Variable,默认字体会宽 5~8%,800×600 下排版走样 -->
+            <FontFamily x:Key="ContentControlThemeFontFamily">Segoe UI</FontFamily>
+            <FontFamily x:Key="TextControlThemeFontFamily">Segoe UI</FontFamily>
+
             <!-- ──── KeyNote 设计令牌:卡片 / 字号层级(vigil-watt 复刻) ──── -->
             <SolidColorBrush x:Key="AppAccentBrush" Color="#0A84FF" />
 
