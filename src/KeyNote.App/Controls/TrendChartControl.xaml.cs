@@ -186,6 +186,9 @@ public sealed partial class TrendChartControl : UserControl
         Canvas.SetTop(_endLabel, Y(_points[last].Value) - 9);
         cv.Children.Add(_endLabel);
 
+        // 底部日期刻度(PadBottom 预留区)
+        DrawXLabels(cv, w, h, X);
+
         // 悬停元素(初始隐藏)
         _hoverLine = new Line
         {
@@ -213,8 +216,8 @@ public sealed partial class TrendChartControl : UserControl
         _hoverTip = new Border
         {
             CornerRadius = new CornerRadius(4),
-            Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0xF2, 0x2A, 0x2A, 0x2A)),
-            BorderBrush = UiColors.Brush(UiColors.Border),
+            Background = UiColors.Brush(UiColors.ChartTipBg),
+            BorderBrush = UiColors.Brush(UiColors.ChartTipBorder),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(8, 4, 8, 4),
             Visibility = Visibility.Collapsed,
@@ -222,11 +225,36 @@ public sealed partial class TrendChartControl : UserControl
             Child = new TextBlock
             {
                 FontSize = 11,
-                Foreground = UiColors.Brush(UiColors.FgPrimary),
+                Foreground = UiColors.Brush(UiColors.ChartTipFg),
                 Text = "",
             },
         };
         cv.Children.Add(_hoverTip);
+    }
+
+    /// 底部日期刻度:≤5 个等分点,居中对齐并钳制在画布内
+    private void DrawXLabels(Canvas cv, double w, double h, Func<int, double> x)
+    {
+        if (_points.Count == 0) return;
+        var last = _points.Count - 1;
+        var sampled = new[] { 0, last / 4, last / 2, last * 3 / 4, last };
+        IEnumerable<int> indices = _points.Count <= 5
+            ? Enumerable.Range(0, _points.Count)
+            : sampled.Distinct();
+        foreach (var i in indices)
+        {
+            var lbl = new TextBlock
+            {
+                Text = _points[i].Label,
+                FontSize = 11,
+                Foreground = UiColors.Brush(UiColors.FgMuted),
+            };
+            lbl.Measure(new Windows.Foundation.Size(200, 20));
+            var left = Math.Clamp(x(i) - lbl.DesiredSize.Width / 2, 0, Math.Max(0, w - lbl.DesiredSize.Width));
+            Canvas.SetLeft(lbl, left);
+            Canvas.SetTop(lbl, h - PadBottom + 5);
+            cv.Children.Add(lbl);
+        }
     }
 
     // ──── 悬停 ────
