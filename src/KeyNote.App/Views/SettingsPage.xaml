@@ -23,14 +23,22 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0"
                 Padding="20,10,20,10">
             <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
-                <TextBlock x:Name="StatusText" Grid.Column="0" Style="{StaticResource CardFootnoteStyle}"
-                           VerticalAlignment="Center" Text="" />
+                <StackPanel x:Name="StatusHost" Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center" Visibility="Collapsed">
+                    <FontIcon x:Name="StatusIcon" Glyph="&#xE73E;" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock x:Name="StatusText" FontSize="13" VerticalAlignment="Center" Text="" />
+                </StackPanel>
                 <Button x:Name="ResetButton" Grid.Column="1" Margin="0,0,8,0" Content="恢复默认"
                         Click="ResetButton_Click" Background="Transparent" BorderThickness="1"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Button x:Name="SaveButton" Grid.Column="2" Content="保存设置"
-                        Click="SaveButton_Click" Style="{StaticResource AccentButtonStyle}" />
+                <Button x:Name="SaveButton" Grid.Column="2"
+                        Click="SaveButton_Click" Style="{StaticResource AccentButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                        <TextBlock Text="保存设置" />
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
     </Grid>

@@ -1,4 +1,5 @@
 using KeyNote.App.Services;
+using KeyNote.App.Theme;
 using KeyNote.Core.Settings;
 using KeyNote.Core.Storage;
 using Microsoft.UI.Xaml;
@@ -302,6 +303,17 @@ public sealed partial class SettingsPage : Page
     }
 
     // ──── 保存 / 恢复默认 ────
+    /// 底栏反馈:成功绿勾 / 失败红叉
+    private void ShowStatus(string text, bool ok)
+    {
+        var color = ok ? UiColors.Success : UiColors.Danger;
+        StatusIcon.Glyph = ok ? "\uE73E" : "\uE783";
+        StatusIcon.Foreground = new SolidColorBrush(color);
+        StatusText.Text = text;
+        StatusText.Foreground = new SolidColorBrush(color);
+        StatusHost.Visibility = Visibility.Visible;
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -334,12 +346,12 @@ public sealed partial class SettingsPage : Page
                 mw.UpdateStatus(!App.Instance.Hooks.IsPaused, App.Instance.Hooks.IsRunning);
             }
 
-            StatusText.Text = "已保存";
+            ShowStatus("已保存", ok: true);
         }
         catch (Exception ex)
         {
             Core.Utils.CrashLog.Write("settings.save", ex);
-            StatusText.Text = "保存失败";
+            ShowStatus("保存失败", ok: false);
         }
     }
 
@@ -368,12 +380,12 @@ public sealed partial class SettingsPage : Page
             }
 
             Build();
-            StatusText.Text = "已恢复默认";
+            ShowStatus("已恢复默认", ok: true);
         }
         catch (Exception ex)
         {
             Core.Utils.CrashLog.Write("settings.reset", ex);
-            StatusText.Text = "恢复失败";
+            ShowStatus("恢复失败", ok: false);
         }
     }
 }
