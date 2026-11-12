@@ -6,6 +6,7 @@ using KeyNote.App.Theme;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 using Microsoft.UI.Windowing;
 
@@ -31,6 +32,7 @@ public sealed partial class MainWindow : Window
 
         ContentFrame.Navigate(typeof(Views.StatsPage));
         Nav.SelectedItem = Nav.MenuItems[0];
+        VersionText.Text = $"v{Services.UpdateService.CurrentVersionText}";
 
         // 自动刷新:只刷当前页(设置页不实现 IRefreshable,自然跳过)
         _refreshTimer = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -252,7 +254,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// 标题栏状态胶囊:未启动 / 已暂停 / 记录中
+    /// 标题栏状态胶囊:未启动 / 已暂停 / 记录中;记录中状态点呼吸,同步侧栏底部暂停按钮
     public void UpdateStatus(bool recording, bool running = true)
     {
         try
@@ -264,11 +266,62 @@ public sealed partial class MainWindow : Window
             StatusPillText.Text = text;
             StatusPillText.Foreground = new SolidColorBrush(color);
             StatusDot.Fill = new SolidColorBrush(color);
+
+            // 呼吸动画只在记录中跑,暂停/未启动静止
+            var pulse = EnsureStatusPulse();
+            var shouldPulse = running && recording;
+            if (shouldPulse)
+            {
+                if (!_pulsing)
+                {
+                    pulse.Begin();
+                    _pulsing = true;
+                }
+            }
+            else if (_pulsing)
+            {
+                pulse.Stop();
+                StatusDot.Opacity = 1.0;
+                _pulsing = false;
+            }
+
+            // 侧栏底部按钮:记录中 → 暂停;已暂停 → 继续;未启动 → 启动
+            PauseText.Text = !running ? "启动监听" : recording ? "暂停记录" : "继续记录";
+            PauseIcon.Glyph = running && recording ? "\uE769" : "\uE768";
         }
         catch (Exception ex)
         {
             Core.Utils.CrashLog.Write("window.status", ex);
         }
+    }
+
+    // ──── 状态点呼吸(1.6s:0.8s 淡出 + 0.8s 回弹) ────
+    private Storyboard? _statusPulse;
+    private bool _pulsing;
+
+    private Storyboard EnsureStatusPulse()
+    {
+        if (_statusPulse is null)
+        {
+            var anim = new DoubleAnimation
+            {
+                From = 1.0,
+                To = 0.35,
+                Duration = new Duration(TimeSpan.FromMilliseconds(800)),
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+            };
+            Storyboard.SetTarget(anim, StatusDot);
+            Storyboard.SetTargetProperty(anim, "Opacity");
+            _statusPulse = new Storyboard();
+            _statusPulse.Children.Add(anim);
+        }
+        return _statusPulse;
+    }
+
+    private void PauseButton_Click(object sender, RoutedEventArgs e)
+    {
+        App.Instance.TogglePause();
     }
 
     public void RunBackup()

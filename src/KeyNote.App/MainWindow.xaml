@@ -10,9 +10,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 48px 通栏标题栏:标题 + 状态胶囊 -->
+        <!-- 48px 通栏标题栏:品牌环 + 标题 + 状态胶囊 -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="10">
+                <!-- 品牌标:18px 蓝环(与 icon.ico 同构,纯 XAML 绘制不依赖 ico 加载) -->
+                <Ellipse Width="18" Height="18" StrokeThickness="3"
+                         Stroke="{StaticResource AppAccentBrush}" VerticalAlignment="Center" />
                 <TextBlock Text="KeyNote" FontWeight="SemiBold" FontSize="13"
                            VerticalAlignment="Center" />
                 <Border x:Name="StatusPill" CornerRadius="4" Padding="8,2"
@@ -70,6 +73,23 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
+            <NavigationView.PaneFooter>
+                <!-- 侧栏底部:暂停/继续 + 版本号(状态由 UpdateStatus 统一同步) -->
+                <StackPanel Margin="12,0,12,14" Spacing="6">
+                    <Button x:Name="PauseButton" Click="PauseButton_Click"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            Padding="10,6" CornerRadius="4"
+                            Background="Transparent" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon x:Name="PauseIcon" Glyph="&#xE769;" FontSize="14" />
+                            <TextBlock x:Name="PauseText" Text="暂停记录" FontSize="13" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock x:Name="VersionText" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               Margin="14,0,0,0" />
+                </StackPanel>
+            </NavigationView.PaneFooter>
             <Frame x:Name="ContentFrame" Background="Transparent" />
         </NavigationView>
     </Grid>

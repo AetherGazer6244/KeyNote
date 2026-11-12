@@ -86,6 +86,16 @@ public partial class App : Application
         }
     }
 
+    // ──── 暂停/继续 ────
+    /// 暂停/继续切换(托盘菜单与侧栏底部按钮共用):未启动则启动,已暂停则继续,记录中则暂停
+    public void TogglePause()
+    {
+        if (!Hooks.IsRunning) Hooks.Start();
+        else if (Hooks.IsPaused) Hooks.Resume();
+        else Hooks.Pause();
+        if (WindowService.Current is MainWindow mw) mw.UpdateStatus(!Hooks.IsPaused, Hooks.IsRunning);
+    }
+
     public App()
     {
         Instance = this;
@@ -136,13 +146,7 @@ public partial class App : Application
             OnOpenSettings = () => window.NavigateTo("settings"),
             OnCheckUpdate = () => CheckUpdateManually(window),
             OnBalloonClicked = () => OnUpdateBalloonClicked(window),
-            OnTogglePause = () =>
-            {
-                if (!Hooks.IsRunning) Hooks.Start();
-                else if (Hooks.IsPaused) Hooks.Resume();
-                else Hooks.Pause();
-                window.UpdateStatus(!Hooks.IsPaused, Hooks.IsRunning);
-            },
+            OnTogglePause = TogglePause,
             OnBackup = () => window.RunBackup(),
             OnVacuum = () => window.RunVacuum(),
             OnSetRetention = days =>

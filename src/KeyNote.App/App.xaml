@@ -9,6 +9,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ──── KeyNote 设计令牌:卡片 / 字号层级(vigil-watt 复刻) ──── -->
+            <SolidColorBrush x:Key="AppAccentBrush" Color="#0A84FF" />
+
             <Style x:Key="AppCardStyle" TargetType="Border">
                 <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
