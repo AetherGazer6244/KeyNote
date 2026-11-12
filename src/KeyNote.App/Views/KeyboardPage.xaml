@@ -5,7 +5,7 @@
     xmlns:controls="using:KeyNote.App.Controls">
     <Grid RowDefinitions="Auto,*">
         <!-- 页头固定,不随内容滚动 -->
-        <controls:PageHeader x:Name="Header" Title="后台" Subtitle="键盘与鼠标活动分布" Margin="20,16,20,0" />
+        <controls:PageHeader x:Name="Header" Title="键鼠" Subtitle="键盘与鼠标活动分布" Margin="20,16,20,0" />
 
         <ScrollViewer Grid.Row="1" Padding="20,10,20,16"
                       VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

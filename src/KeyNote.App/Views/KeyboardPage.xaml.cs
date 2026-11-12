@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace KeyNote.App.Views;
 
-/// 后台页(Page 2):7×24 小时活跃度 + QWERTY 键盘热力图。
+/// 键鼠页(Page 2):7×24 小时活跃度 + QWERTY 键盘热力图。
 public sealed partial class KeyboardPage : Page, IRefreshable
 {
     private static readonly string[] CnWeekdays = { "一", "二", "三", "四", "五", "六", "日" };

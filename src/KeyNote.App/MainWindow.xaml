@@ -49,17 +49,17 @@
                         <FontIcon Glyph="{StaticResource StatsGlyph}" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="后台" Tag="keyboard">
+                <NavigationViewItem Content="键鼠" Tag="keyboard">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="{StaticResource KeyboardGlyph}" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="热力图" Tag="heatmap">
+                <NavigationViewItem Content="年度" Tag="heatmap">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="{StaticResource HeatmapGlyph}" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="常用按键" Tag="topkeys">
+                <NavigationViewItem Content="排行" Tag="topkeys">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="{StaticResource TopKeysGlyph}" />
                     </NavigationViewItem.Icon>
