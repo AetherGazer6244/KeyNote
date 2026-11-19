@@ -5,7 +5,7 @@ namespace KeyNote.App.Views;
 /// 设置项声明表:字段种类 + 元数据(扩字段只加一行)。
 public sealed partial class SettingsPage
 {
-    private enum FieldKind { Switch, Slider, Combo, Number, Path, Action, Info }
+    private enum FieldKind { Switch, Slider, Combo, Number, Path, Action, Info, Hotkey }
 
     private sealed record FieldSpec(
         FieldKind Kind,
@@ -46,6 +46,17 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "device_taskbar_pill_enabled", "任务栏电量贴片", "在任务栏常驻低电设备电量贴片,双击唤起主窗口。"),
         }),
         ("设备插件", DevicePluginFields()),
+        ("AI 额度", new[]
+        {
+            new FieldSpec(FieldKind.Switch, "quota_alert_enabled", "额度告警", "provider 剩余额度跨过阈值时弹系统通知(同等间隔 60 分钟冷却,一轮合并一条)。"),
+            new FieldSpec(FieldKind.Number, "quota_warn_pct", "关注阈值", "额度用量百分比达到该值时按 warn 提醒。", Lo: 0, Hi: 100, Step: 1),
+            new FieldSpec(FieldKind.Number, "quota_critical_yuan", "余额告警线", "余额类 provider 低于该金额(元)时按 critical 提醒。", Lo: 0, Hi: 500, Step: 1),
+            new FieldSpec(FieldKind.Number, "quota_refresh_interval", "刷新间隔(秒)", "轮询 provider 配额接口的周期,15~3600 秒。", Lo: 15, Hi: 3600, Step: 5),
+            new FieldSpec(FieldKind.Switch, "quota_adaptive_poll", "自适应轮询", "有 critical 行时间隔减半、持续失败指数退避、全正常放缓 ×1.5。"),
+            new FieldSpec(FieldKind.Switch, "quota_widget_enabled", "额度悬浮小组件", "在桌面常驻额度行悬浮条(Acrylic 玻璃面,可拖动)。"),
+            new FieldSpec(FieldKind.Switch, "quota_hotkey_enabled", "全局快捷键", "启用后按组合键随时唤起/收起额度小组件。"),
+            new FieldSpec(FieldKind.Hotkey, "quota_hotkey", "快捷键组合", "点输入框后直接按下组合键录入;也可手打如 Ctrl+Shift+A,空 = 不设组合。"),
+        }),
         ("数据", new[]
         {
             new FieldSpec(FieldKind.Action, "backup_now", "立即备份", "对当前数据库做一致性快照。", ActionKey: "backup", Advanced: true),

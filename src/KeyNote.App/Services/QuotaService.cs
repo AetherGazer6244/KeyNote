@@ -300,6 +300,37 @@ public sealed class QuotaService
 
     public List<object?> Providers() => ConfigStore.GetList(Cfg, "providers");
 
+    // ──── 设置页桥(三合一整合):config.json 镜像键 ↔ quota.json 真源 ────
+    /// 额度设置镜像到 KeyNote config.json(编辑显示用;真源在 quota.json)。
+    public void MirrorToConfig(KeyNote.Core.Settings.AppSettings cfg)
+    {
+        var alert = AlertDict();
+        cfg.Set("quota_alert_enabled", !alert.TryGetValue("enable", out var e) || e is not false);
+        cfg.Set("quota_warn_pct", alert.TryGetValue("warn_pct", out var w) && w is not null ? Convert.ToInt32(w) : 30);
+        cfg.Set("quota_critical_yuan", alert.TryGetValue("critical_amount_yuan", out var c) && c is not null ? Convert.ToDouble(c) : 5.0);
+        cfg.Set("quota_refresh_interval", Cfg.TryGetValue("refresh_interval_sec", out var r) && r is not null ? Convert.ToInt32(r) : 30);
+        cfg.Set("quota_adaptive_poll", AdaptivePoll);
+        cfg.Set("quota_widget_enabled", WidgetEnabled);
+        cfg.Set("quota_hotkey_enabled", HotkeyEnabled);
+        cfg.Set("quota_hotkey", HotkeyText);
+    }
+
+    /// 设置页保存后:把 config.json 镜像键应用回 quota 域(落盘 + 轮询/小组件热更)。
+    public void ApplyFromConfig(KeyNote.Core.Settings.AppSettings cfg)
+    {
+        var alert = AlertDict();
+        alert["enable"] = cfg.GetBool("quota_alert_enabled");
+        alert["warn_pct"] = Math.Clamp(cfg.GetInt("quota_warn_pct", 30), 0, 100);
+        alert["critical_amount_yuan"] = Math.Max(0, cfg.GetDouble("quota_critical_yuan", 5.0));
+        Cfg["refresh_interval_sec"] = (int)Math.Clamp(cfg.GetInt("quota_refresh_interval", 30), 15, 3600);
+        SetAdaptivePoll(cfg.GetBool("quota_adaptive_poll"));
+        SetWidgetEnabled(cfg.GetBool("quota_widget_enabled"));
+        SetHotkey(cfg.GetString("quota_hotkey").Trim(), cfg.GetBool("quota_hotkey_enabled"));
+        TrySaveCfg();
+        Poller.Reschedule();
+        _dq.TryEnqueue(ApplyWidgetState);
+    }
+
     /// <summary>provider 名称必须唯一:返回重名条目(用于添加/编辑校验)。</summary>
     public Dictionary<string, object?>? FindProviderByName(string? name)
     {

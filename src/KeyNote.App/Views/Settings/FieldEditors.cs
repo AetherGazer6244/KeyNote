@@ -1,13 +1,92 @@
 using KeyNote.App.Theme;
+using KeyNote.Core.Quota.Hotkeys;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Windows.System;
 
 namespace KeyNote.App.Views;
 
 /// 设置项编辑器工厂:按 FieldKind 生成右侧控件。
 public sealed partial class SettingsPage
 {
+    // Win32 修饰键虚拟键码(取修饰键状态用;WinUI 的 KeyRoutedEventArgs 不带修饰键)
+    private const int VkShiftHk = 0x10, VkControlHk = 0x11, VkMenuHk = 0x12,
+                      VkLWinHk = 0x5B, VkRWinHk = 0x5C;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern short GetKeyState(int nVirtKey);
+
+    private static bool IsKeyDown(int vk) => (GetKeyState(vk) & 0x8000) != 0;
+
+    /// <summary>
+    /// 快捷键编辑器:点输入框直接按组合键录入(修饰键经 Win32 采样);
+    /// 也可手打 "Ctrl+Shift+A"(Enter 提交 / Esc 还原 / 失焦校验回滚),空 = 清除。
+    /// </summary>
+    private FrameworkElement BuildHotkey(FieldSpec spec)
+    {
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var current = _cfg.GetString(spec.Key);
+        var box = new TextBox { Text = current, Width = 150 };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, spec.Title);
+
+        void Commit()
+        {
+            var text = box.Text.Trim();
+            if (text.Length == 0)
+            {
+                current = "";
+            }
+            else if (HotkeySpec.TryParse(text, out var k, out _) && k is not null)
+            {
+                current = k.ToText();
+            }
+            box.Text = current;
+            _editors[spec.Key] = current;
+        }
+
+        box.KeyDown += (sender, e) =>
+        {
+            if (e.Key == VirtualKey.Enter) { Commit(); e.Handled = true; return; }
+            if (e.Key == VirtualKey.Escape) { box.Text = current; e.Handled = true; return; }
+            // 只按了修饰键:等用户按主键,不处理
+            if (e.Key is VirtualKey.Control or VirtualKey.Shift or VirtualKey.Menu
+                or VirtualKey.LeftWindows or VirtualKey.RightWindows)
+                return;
+            // 输入框已被手动改过 → 这是在打字,别抢
+            if (!string.Equals(box.Text.Trim(), current, StringComparison.OrdinalIgnoreCase)) return;
+
+            var mods = 0;
+            if (IsKeyDown(VkControlHk)) mods |= HotkeySpec.ModControl;
+            if (IsKeyDown(VkMenuHk)) mods |= HotkeySpec.ModAlt;
+            if (IsKeyDown(VkShiftHk)) mods |= HotkeySpec.ModShift;
+            if (IsKeyDown(VkLWinHk) || IsKeyDown(VkRWinHk)) mods |= HotkeySpec.ModWin;
+            if (mods == 0) return; // 普通字符,走输入
+            if (!HotkeySpec.TryFromVirtualKey((int)e.Key, mods, out var spec2, out _)
+                || spec2 is null) return;
+            current = spec2.ToText();
+            box.Text = current;
+            _editors[spec.Key] = current;
+            e.Handled = true;
+        };
+        box.LostFocus += (_, _) => Commit();
+
+        var clear = new Button { Content = "清除" };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clear, $"{spec.Title} 清除");
+        clear.Click += (_, _) =>
+        {
+            current = "";
+            box.Text = "";
+            _editors[spec.Key] = "";
+        };
+
+        panel.Children.Add(box);
+        panel.Children.Add(clear);
+        _editors[spec.Key] = current;
+        return panel;
+    }
+
     private FrameworkElement BuildSwitch(FieldSpec spec)
     {
         var toggle = new ToggleSwitch

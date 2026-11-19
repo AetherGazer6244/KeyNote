@@ -141,6 +141,8 @@ public partial class App : Application
         QuotaHotkey.Apply(Quotas.HotkeyText, Quotas.HotkeyEnabled);
         Quotas.Poller.Start();
         _ = Quotas.Poller.RefreshNowAsync();
+        // 额度设置镜像到 config.json(设置页编辑显示;真源在 quota.json)
+        Quotas.MirrorToConfig(Settings);
 
         var window = new MainWindow();
         WindowService.Current = window;
