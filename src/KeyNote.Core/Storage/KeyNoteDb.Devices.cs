@@ -192,4 +192,20 @@ public static partial class KeyNoteDb
         if (!Ready) return 0;
         return (long)(Scalar("SELECT COUNT(*) FROM device_battery_samples") ?? 0L);
     }
+
+    /// 单台设备的历史概要(条数 + 起止时间),删除确认框用。
+    public static DeviceHistorySummary GetDeviceSampleSummary(string deviceId)
+    {
+        if (!Ready) return new DeviceHistorySummary(0, null, null);
+        using var cmd = ReadCmd(
+            "SELECT COUNT(*), MIN(ts), MAX(ts) FROM device_battery_samples WHERE device_id = $id");
+        if (cmd is null) return new DeviceHistorySummary(0, null, null);
+        cmd.Parameters.AddWithValue("$id", deviceId);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read() || r.GetInt32(0) == 0) return new DeviceHistorySummary(0, null, null);
+        return new DeviceHistorySummary(
+            r.GetInt32(0),
+            r.IsDBNull(1) ? null : LocalTime(r.GetInt64(1)),
+            r.IsDBNull(2) ? null : LocalTime(r.GetInt64(2)));
+    }
 }

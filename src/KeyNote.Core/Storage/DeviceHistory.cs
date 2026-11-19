@@ -9,3 +9,6 @@ public sealed record HistorySample(
 /// 单台设备的历史聚合(条数/名称/最早/最新);离线占位补全与设备历史列表用。
 public sealed record DeviceHistoryStat(
     string DeviceId, string Name, DeviceKind Kind, int Count, DateTimeOffset First, DateTimeOffset Last);
+
+/// 单台设备的历史概要(删除确认框显示条数与时间跨度用)。
+public sealed record DeviceHistorySummary(int Count, DateTimeOffset? First, DateTimeOffset? Last);
