@@ -19,6 +19,9 @@ public partial class App : Application
     public InputHookService Hooks { get; private set; } = null!;
     public TrayService Tray { get; private set; } = null!;
 
+    /// 设备域组合根(三合一整合):设备页/贴片/小组件/托盘低电提醒统一经此取服务
+    public static AppServices Services { get; private set; } = null!;
+
     private bool _quitting;
     private int _idlePauseMin;
     private DateTime _lastActivity = DateTime.Now;
@@ -119,6 +122,12 @@ public partial class App : Application
             CrashLog.Write("db.init", ex);
         }
 
+        // 设备域启动(三合一整合):插件开关在 config.json device_plugin_*;低电提醒经托盘气泡
+        Services = new AppServices();
+        Services.Manager.Start();
+        Services.Manager.LowBatteryDetected += device =>
+            Services.NotifyLowBattery?.Invoke($"「{device.DisplayName}」电量低({device.BatteryPercent}%),请及时充电");
+
         var window = new MainWindow();
         WindowService.Current = window;
         window.Activate();
@@ -160,6 +169,11 @@ public partial class App : Application
         Tray.Start();
         if (Settings.HideTrayIcon) Tray.SetVisible(false);
 
+        // 设备域回调注入(松耦合:域内代码不反向依赖主窗/托盘)
+        Services.ShowMainWindow = () => window.ShowMainWindow();
+        Services.ExitApplication = Quit;
+        Services.NotifyLowBattery = text => Tray.UiMarshal?.Invoke(() => Tray.Notify(text));
+
         // 更新检查:启动后每日静默一次
         StartDailyUpdateCheck(window);
 
@@ -177,6 +191,17 @@ public partial class App : Application
             {
                 Tray.Notify("KeyNote 已启动,窗口已最小化到托盘");
             }
+        }
+
+        // 桌面悬浮小组件 / 任务栏贴片(按设置开关拉起)
+        if (Services.Settings.WidgetEnabled)
+        {
+            Services.Widget = new Widgets.WidgetWindow();
+            Services.Widget.Activate();
+        }
+        if (Services.Settings.TaskbarBatteryEnabled)
+        {
+            Services.TaskbarBattery = new TaskbarPillManager();
         }
     }
 
@@ -340,6 +365,7 @@ public partial class App : Application
     {
         if (_quitting) return;
         _quitting = true;
+        try { Services?.Dispose(); } catch { /* 退出兜底 */ }
         try { KeyNoteDb.Close(); } catch (Exception ex) { CrashLog.Write("db.close", ex); }
         try { Tray.Stop(); } catch { /* 忽略 */ }
         try { Hooks.Dispose(); } catch { /* 忽略 */ }
