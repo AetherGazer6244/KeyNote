@@ -1,5 +1,6 @@
 using System.Text;
 using KeyNote.App.Helpers;
+using KeyNote.Core.Devices.Models;
 using KeyNote.Core.Storage;
 
 namespace KeyNote.App.Services;
@@ -16,6 +17,14 @@ internal static class TrayMenuBuilder
     public const int IdVacuum = 11;
     public const int IdRetentionBase = 20;
     public const int IdQuit = 99;
+    // 三合一整合新增区段:设备 100~119 / 额度 120~139 / 悬浮窗开关 140~142 / 页面直达 150+
+    public const int IdDeviceBase = 100;
+    public const int IdQuotaBase = 120;
+    public const int IdToggleDeviceWidget = 140;
+    public const int IdToggleQuotaWidget = 141;
+    public const int IdToggleTaskbarPill = 142;
+    public const int IdOpenDevices = 150;
+    public const int IdOpenQuota = 151;
 
     private static readonly (string Label, int Days)[] RetentionOptions =
     {
@@ -79,10 +88,73 @@ internal static class TrayMenuBuilder
         Append(data, TrayNative.MfPopup, (uint)retention, "保留 raw 数据");
         Append(menu, TrayNative.MfPopup, (uint)data, "📊 数据管理");
 
+        Append(menu, TrayNative.MfPopup, (uint)DeviceMenu(), "🔋 设备电量");
+
         Append(menu, TrayNative.MfSeparator, 0, null);
         Append(menu, TrayNative.MfString, IdQuit, "退出");
         return menu;
     }
+
+    /// 设备电量子菜单:在线设备电量一览(灰显) + 悬浮窗开关 + 设备页直达。
+    private static nint DeviceMenu()
+    {
+        var dev = TrayNative.CreatePopupMenu();
+        var rows = DeviceRows();
+        if (rows.Count == 0)
+        {
+            Append(dev, TrayNative.MfString | TrayNative.MfGrayed, 0, "无在线设备");
+        }
+        else
+        {
+            foreach (var row in rows)
+                Append(dev, TrayNative.MfString | TrayNative.MfGrayed, 0, row);
+        }
+        Append(dev, TrayNative.MfSeparator, 0, null);
+
+        var services = App.Services;
+        var widgetOn = services?.Widget is not null;
+        Append(dev, TrayNative.MfString | (widgetOn ? TrayNative.MfChecked : 0),
+            IdToggleDeviceWidget, "悬浮小组件");
+        Append(dev, TrayNative.MfString | (services?.Settings.TaskbarBatteryEnabled == true ? TrayNative.MfChecked : 0),
+            IdToggleTaskbarPill, "任务栏贴片");
+        Append(dev, TrayNative.MfString, IdOpenDevices, "打开设备页…");
+        return dev;
+    }
+
+    /// 在线设备电量行(最多 8 行):类型图标 + 名称 + 电量,充电加 ⚡。
+    private static List<string> DeviceRows()
+    {
+        var rows = new List<string>();
+        try
+        {
+            var services = App.Services;
+            if (services is null) return rows;
+            rows = services.Manager.Devices
+                .Where(d => d.IsOnline && d.BatteryPercent.HasValue)
+                .OrderBy(d => d.Kind).ThenBy(d => d.DisplayName)
+                .Take(8)
+                .Select(d =>
+                {
+                    var name = DevicePresentation.Apply(d, services.Settings).DisplayName;
+                    var charging = d.Charging is ChargingState.Charging or ChargingState.Full ? " ⚡" : "";
+                    return $"{KindGlyph(d.Kind)} {name}  {d.BatteryPercent}%{charging}";
+                })
+                .ToList();
+        }
+        catch { /* 托盘线程取数失败不阻塞菜单 */ }
+        return rows;
+    }
+
+    private static string KindGlyph(DeviceKind kind) => kind switch
+    {
+        DeviceKind.Mouse => "🖱",
+        DeviceKind.Keyboard => "⌨",
+        DeviceKind.Headset => "🎧",
+        DeviceKind.Speaker => "🔊",
+        DeviceKind.Gamepad => "🎮",
+        DeviceKind.Computer => "💻",
+        _ => "🔋",
+    };
 
     private static void Append(nint menu, uint flags, uint id, string? text)
     {

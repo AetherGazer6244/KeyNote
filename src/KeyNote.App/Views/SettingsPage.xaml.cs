@@ -355,16 +355,7 @@ public sealed partial class SettingsPage : Page
                 dev.Manager.ApplySettings();
                 KeyNoteDb.SetDeviceRetentionDays(dev.Settings.HistoryRetentionDays);
                 dev.TaskbarBattery?.RefreshFromSettings();
-                if (dev.Settings.WidgetEnabled && dev.Widget is null)
-                {
-                    dev.Widget = new Widgets.WidgetWindow();
-                    dev.Widget.Activate();
-                }
-                else if (!dev.Settings.WidgetEnabled && dev.Widget is not null)
-                {
-                    dev.Widget.Close();
-                    dev.Widget = null;
-                }
+                dev.ApplyWidgetState();
             }
 
             ShowStatus("已保存", ok: true);

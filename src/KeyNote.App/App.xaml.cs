@@ -154,6 +154,11 @@ public partial class App : Application
             IsPaused = () => Hooks.IsPaused,
             OnShowWindow = () => window.ShowMainWindow(),
             OnOpenSettings = () => window.NavigateTo("settings"),
+            OnOpenDevices = () =>
+            {
+                window.ShowMainWindow();
+                window.NavigateTo("devices");
+            },
             OnCheckUpdate = () => CheckUpdateManually(window),
             OnBalloonClicked = () => OnUpdateBalloonClicked(window),
             OnTogglePause = TogglePause,

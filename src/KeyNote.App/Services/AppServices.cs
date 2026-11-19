@@ -19,6 +19,46 @@ public sealed class AppServices : IDisposable
     /// 低电提醒文案出口(App 注入 → 托盘气泡;域内线程触发,封装送须由实现方保证)。
     public Action<string>? NotifyLowBattery { get; set; }
 
+    // ──── 托盘开关(悬浮窗与贴片,设置键同步落盘) ────
+    /// 桌面悬浮小组件开/关,状态写入 device_widget_enabled。
+    public void ToggleWidget()
+    {
+        Settings.WidgetEnabled = !Settings.WidgetEnabled;
+        ApplyWidgetState();
+        Settings.Save();
+    }
+
+    /// 按当前设置拉起/关闭悬浮小组件(托盘开关与设置页保存共用)。
+    public void ApplyWidgetState()
+    {
+        if (Settings.WidgetEnabled && Widget is null)
+        {
+            Widget = new Widgets.WidgetWindow();
+            Widget.Activate();
+        }
+        else if (!Settings.WidgetEnabled && Widget is not null)
+        {
+            Widget.Close();
+            Widget = null;
+        }
+    }
+
+    /// 任务栏电量贴片开/关,状态写入 device_taskbar_pill_enabled。
+    public void ToggleTaskbarPill()
+    {
+        Settings.TaskbarBatteryEnabled = !Settings.TaskbarBatteryEnabled;
+        if (Settings.TaskbarBatteryEnabled)
+        {
+            TaskbarBattery ??= new TaskbarPillManager();
+        }
+        else
+        {
+            TaskbarBattery?.Dispose();
+            TaskbarBattery = null;
+        }
+        Settings.Save();
+    }
+
     /// 唤起主窗 / 退出应用(贴片双击、贴片与小组件右键菜单共用)。
     public Action? ShowMainWindow { get; set; }
     public Action? ExitApplication { get; set; }

@@ -40,6 +40,7 @@ public sealed class TrayService : IDisposable
     public Func<bool>? IsPaused { get; set; }
     public Action? OnShowWindow { get; set; }
     public Action? OnOpenSettings { get; set; }
+    public Action? OnOpenDevices { get; set; }
     public Action? OnCheckUpdate { get; set; }
     public Action? OnBalloonClicked { get; set; }
     public Action? OnTogglePause { get; set; }
@@ -272,6 +273,9 @@ public sealed class TrayService : IDisposable
     {
         if (id == 0) return;
         if (id == TrayMenuBuilder.IdShow) Run(() => OnShowWindow?.Invoke());
+        else if (id == TrayMenuBuilder.IdToggleDeviceWidget) Run(() => App.Services?.ToggleWidget());
+        else if (id == TrayMenuBuilder.IdToggleTaskbarPill) Run(() => App.Services?.ToggleTaskbarPill());
+        else if (id == TrayMenuBuilder.IdOpenDevices) Run(() => OnOpenDevices?.Invoke());
         else if (id == TrayMenuBuilder.IdPause) Run(() => OnTogglePause?.Invoke());
         else if (id == TrayMenuBuilder.IdSettings) Run(() => OnOpenSettings?.Invoke());
         else if (id == TrayMenuBuilder.IdUpdateCheck) Run(() => OnCheckUpdate?.Invoke());
