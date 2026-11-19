@@ -2,6 +2,25 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0] - 2026-11-19
+
+三合一整合:并入 VigilWatt 设备电量与 AgentEye AI 额度,KeyNote 升级为「键鼠统计 + 设备电量 + AI 额度」一体的桌面观测台。不改既有统计口径,v1~v6 表结构与数据一律不动(v7 起纯增量)。
+
+### 新增
+
+- **设备电量域**(`KeyNote.Core.Devices`,自 VigilWatt 移植,零上游残留):BLE GATT / 2.4G HID / 蓝牙经典 / 系统电池四路来源,23 个品牌硬件插件(会写帧的协议默认关);电量页(设备列表 + KPI 卡 + 单设备 24h 曲线)、桌面悬浮小组件、任务栏低电贴片、低电托盘气泡、续航估算
+- **AI 额度域**(`KeyNote.Core.Quota`,自 AgentEye 移植):8 类 provider 轮询(DeepSeek/智谱/MiniMax/OpenCode Go/SiliconFlow/OpenRouter/通用 OpenAI/中转站)、API Key DPAPI 加密、额度页卡片(等级色点/进度条/重置倒计时/行内刷新)、provider 管理面板(自动识别/连通测试/模型拉取)、Acrylic 悬浮小组件、全局快捷键、跨阈值告警(冷却/免打扰/恢复通知)
+- **首启自动导入**:`MigrationService` 把 VigilWatt `history.db` 电量历史并入 keynote.db、AgentEye `~/.agenteye` 配置与缓存搬到数据目录(幂等标记,旧目录只读不动)
+- keynote.db v7 增量表 `device_battery_samples`(电量样本,保留期 30~730 天可设);写入队列/保留期清理独立分支
+- 设置页新增「设备电量 / 设备插件 / AI 额度」三组声明式字段;`FieldKind.Hotkey` 组合键编辑器(按键录入 + 手打校验回滚)
+- 托盘新增「🔋 设备电量」「🤖 AI 额度」子菜单(在线设备/额度一览 + 悬浮窗开关 + 页面直达)
+- 侧边栏导航 5 → 7 页,分「键鼠 / 设备 / 额度」三组 header;设备页/额度页支持自动刷新与托盘直达
+
+### 变更
+
+- 数据目录新增 `quota.json`(AgentEye 原格式,兼容 Python 版合并语义)/ `quota-cache/` / `device_state.json`
+- 依赖新增 `System.Security.Cryptography.ProtectedData`(API Key DPAPI 加密)
+
 ## [1.2.0] - 2026-11-12
 
 界面视觉打磨,不改数据库 schema 与统计口径。

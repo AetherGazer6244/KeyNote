@@ -70,15 +70,19 @@
 |---|---|
 | `src/KeyNote.Core/Storage/KeyNoteDb.cs` | 连接管理 + 聚合查询(分钟/小时/天/按键/键型/鼠标)+ 时间桶工具 |
 | `src/KeyNote.Core/Storage/KeyNoteDb.Migrations.cs` | 迁移 v1~v6(Python 版库兼容)+ 会话记录 |
+| `src/KeyNote.Core/Storage/KeyNoteDb.Devices.cs` | v7 增量:设备电量样本表(批量导入/查询/保留清理/概况) |
+| `src/KeyNote.Core/Storage/MigrationService.cs` | 旧应用数据首启导入(vigil history.db→v7 / AgentEye→quota.json+cache;幂等标记) |
+| `src/KeyNote.Core/Devices/` | 设备域(vigil 移植):BLE/HID 插件/DeviceManager/设置 shim + Log 路由 |
+| `src/KeyNote.Core/Quota/` | 额度域(AgentEye 移植):8 provider 轮询/ConfigStore(quota.json+DPAPI)/缓存/静默时段/HotkeySpec + L 类(中文精简) |
 | `src/KeyNote.Core/Storage/KeyNoteDb.Writer.cs` | 写入队列 + 后台 writer 线程 + 聚合 upsert + 保留期清理 |
 | `src/KeyNote.Core/Storage/KeyNoteDb.Maintenance.cs` | 备份/导出/VACUUM/健康检查 + 关闭收尾 |
 
 ### 5. UI 窗口
 | 文件 | 职责 |
 |---|---|
-| `src/KeyNote.App/MainWindow.xaml(.cs)` | 主窗口(标题栏 + 侧边栏 + 5 页 + Mica + 自动刷新 + 关闭到托盘)|
+| `src/KeyNote.App/MainWindow.xaml(.cs)` | 主窗口(标题栏 + 侧边栏 7 页三组 + Mica + 自动刷新 + 关闭到托盘)|
 | `src/KeyNote.App/App.xaml(.cs)` | 应用根:设置加载 → DB 初始化 → 钩子 → 托盘 → 窗口显隐策略 + 全局异常落盘 |
-| `src/KeyNote.App/Views/*.xaml(.cs)` | 5 个页面 + `IRefreshable` |
+| `src/KeyNote.App/Views/*.xaml(.cs)` | 7 个页面(Stats/Keyboard/Heatmap/TopKeys/Devices/Quota/Settings)+ `IRefreshable`;`Views/Quota/ProviderManagerPane`(provider 管理面板)|
 | `src/KeyNote.App/Views/PageRefresh.cs` | 页面刷新接线助手(页头刷新 + 首次加载 + 异常落盘)|
 | `src/KeyNote.App/Controls/*.xaml(.cs)` | KpiCard / PageHeader / TrendChartControl / GhHeatmapControl / HourlyGridControl / KeyboardHeatmapControl / BarChartControl / ChartTip / EmptyStateView |
 | `src/KeyNote.App/Theme/UiColors.cs` | 暗色语义色板(唯一色板真源)|
@@ -96,6 +100,14 @@
 | `src/KeyNote.App/Services/UpdatePrompt.cs` | 更新确认框(版本对比 + Release 更新说明)+ 下载进度框 |
 | `src/KeyNote.App/Services/UpdateServiceApp.cs` | 「下载 → 校验 → 安装」共用流程(设置页与托盘气泡共用) |
 | `src/KeyNote.App/Services/MaintenanceService.cs` | 备份 / VACUUM / CSV 导出(托盘与设置页共用)|
+| `src/KeyNote.App/Services/AppServices.cs` | 设备域组合根(vigil 适配):Settings/Manager/Widget/TaskbarBattery + 注入回调 + 托盘开关 |
+| `src/KeyNote.App/Services/QuotaService.cs` | 额度域组合根(AgentEye 适配):Cfg/Poller/Notify/暂停集合 + config.json 镜像桥 + 小组件生命周期 |
+| `src/KeyNote.App/Services/QuotaPoller.cs` | 额度轮询引擎(PeriodicTimer 后台循环 + 单飞 + 行级单刷 + 自适应间隔)|
+| `src/KeyNote.App/Services/QuotaNotifier.cs` | 告警评估与通知(跨阈值/冷却/免打扰/恢复;toast→托盘气泡→beep 三级降级)|
+| `src/KeyNote.App/Services/QuotaRes.cs` | 额度域画刷解析(Ae*Brush 键 → UiColors 语义色映射)|
+| `src/KeyNote.App/Services/QuotaHotkeyService.cs` | 全局快捷键(Win32 RegisterHotKey 隐藏消息窗,唤起/收起额度小组件)|
+| `src/KeyNote.App/Widgets/DeviceWidget/` + `Widgets/QuotaWidget/` | 桌面悬浮小组件(设备电量角标 / Acrylic 额度条)|
+| `src/KeyNote.App/Services/Taskbar/` | 任务栏电量贴片(vigil 六件套,namespace 仍为 KeyNote.App.Services)|
 
 ### 7. 构建与部署
 | 文件 | 职责 |
@@ -117,7 +129,7 @@
 - 改键型分类或统计口径时,必须在 README「统计口径变更」记一笔
 
 ## 待办(TODO)
-- [ ] **三合一整合**(`feature/merge-vigilwatt-agenteye`):并入 VigilWatt 设备电量(领域层/电量页/任务栏贴片/悬浮小组件/低电提醒)与 AgentEye AI 额度(8 provider 轮询/额度页/toast 告警/全局快捷键/Acrylic 小组件);keynote.db v7 增量;首启自动导入两旧应用数据;上游 evren-oct/vigil-watt 自此放弃同步
+- [x] ~~**三合一整合**~~:已完成(P0~P6)——VigilWatt 设备电量(领域层/电量页/任务栏贴片/悬浮小组件/低电提醒)与 AgentEye AI 额度(8 provider 轮询/额度页/toast 告警/全局快捷键/Acrylic 小组件)并入;keynote.db v7 增量;首启自动导入两旧应用数据(`MigrationService` 幂等);上游 vigil-watt / AgentEye 自此放弃同步
 - [x] ~~应用内更新检查~~:已实现(`Services/UpdateService.cs` + 设置页「关于」分组 + 托盘入口 + 启动每日静默检查)
 - [x] ~~应用内静默更新~~:已实现(`UpdateInstaller` + `UpdatePrompt` + `UpdateServiceApp`:应用内下载 → 大小校验 → 拉起安装器自动替换并重启)
 - [ ] **发布体积瘦身**(低优先级):`dist` 95MB 中约 88MB 是 Windows App SDK 运行时,自包含零依赖是既定路线。对标 MAA(MaaWpfGui 同为 `SelfContained=true` + `PublishTrimmed=false`,发行数百 MB 不裁剪),维持现状是 .NET GUI 正解;如仍想省,只剩逐文件裁剪实验(约 60 文件 / 12MB,每次升级 SDK 需重验)

@@ -1,6 +1,6 @@
-# KeyNote - 键盘 / 鼠标使用统计
+# KeyNote - 键鼠使用统计 · 设备电量 · AI 额度
 
-轻量级 Windows 单机输入统计工具,WinUI3 原生实现(.NET 8 + Windows App SDK,非打包)。
+轻量级 Windows 单机桌面观测台,WinUI3 原生实现(.NET 8 + Windows App SDK,非打包)。
 
 紧凑 800×600 窗口、Win11 Mica 材质、永久暗色 Fluent 主题,无需管理员权限安装。
 
@@ -10,18 +10,32 @@
   - 键盘:字母 / 数字 / 符号 / 功能键 四类自动分类(修饰键只记活跃,不计入统计)
   - 鼠标:左 / 右 / 中 / X1 / X2 五键
   - 按物理按下计数(系统自动重复只算一次),Shift / CapsLock / AltGr 正确还原字符
-- **5 页侧边栏界面**(左侧导航)
+- **7 页侧边栏界面**(左侧导航,分「键鼠 / 设备 / 额度」三组)
   - **统计页**:时间范围筛选(今日 / 近 7 天 / 近 30 天)+ 1 大 2 小 KPI 卡(范围内按键 / 鼠标点击 / 活跃天数,标签与脚注跟随筛选)+ 按键趋势图(悬停十字线 + 日期刻度)
   - **键鼠页**:7×24 小时活跃度热力图 + QWERTY 键盘按键分布热力图
   - **年度热力图页**:GitHub 风格年度热力图(活跃天数 / 最长连续 / 峰值概要,按设置天数动态扩展,最多 730 天)
   - **常用按键页**:Top 10 按键横向条形图(与键盘热力图同为合并大小写口径)
   - **设置页**:声明式字段表(4 组配置 + 分组"高级设置"折叠区 + 搜索过滤 + 固定底栏)
+- **无线设备电量**(`KeyNote.Core.Devices`,自 VigilWatt 并入)
+  - BLE GATT 电池服务 + 2.4G HID + 蓝牙经典 + 系统电池四路来源,23 个品牌硬件插件(开关默认值全盘继承 vigil:会写帧的协议一律默认关)
+  - 电量页:设备列表(电量条 + 来源徽标 + 状态)+ KPI 卡 + 单设备 24h 电量曲线(展开行)
+  - 桌面悬浮小组件(可拖动)+ 任务栏低电贴片 + 低电托盘气泡提醒 + 续航估算
+  - 电量样本入 keynote.db v7 `device_battery_samples`,可设保留期(30~730 天)
+- **AI 额度监控**(`KeyNote.Core.Quota`,自 AgentEye 并入)
+  - 8 类 provider 轮询(DeepSeek / 智谱 / MiniMax / OpenCode Go / SiliconFlow / OpenRouter / 通用 OpenAI 兼容 / 中转站),API Key DPAPI 加密存储
+  - 额度页:provider 卡片(等级色点 + 进度条 + 重置倒计时 + 行内刷新)+ 右键暂停/编辑/删除 + 手风琴详情
+  - 内置 provider 管理面板(URL / Key / Model 表单,自动识别类型、测试连通、拉取模型列表)
+  - 桌面悬浮小组件(Acrylic 玻璃面)+ 全局快捷键唤起 + 跨阈值告警(60 分钟冷却 / 免打扰时段 / 恢复通知)
+  - 配置独立 `quota.json`(AgentEye 原格式,兼容 Python 版合并语义),缓存独立 `quota-cache/`
+- **首启自动导入**(旧应用迁移,幂等标记不重复导入)
+  - VigilWatt:`%LOCALAPPDATA%\VigilWatt\history.db` 电量历史 → keynote.db v7(旧目录只读不动)
+  - AgentEye:`~/.agenteye/config.json` + `cache/` → `quota.json` + `quota-cache/`(DPAPI 按 Windows 用户解密,跨应用可读)
 - **异步 SQLite**(`KeyNoteDb`)
   - 队列 + 后台 writer 线程批写,读写连接分离,WAL + NORMAL synchronous,长期运行零卡顿
   - 聚合表永久保留,毫秒级查询;raw 按键记录默认 365 天自动清理
   - 自动周期备份(保留 7 份日备 + 4 份周备);手动备份 / VACUUM / CSV 导出
-  - 数据库迁移 v1~v6,启动自动升级,与历史 Python 版库完全兼容
-- **系统托盘**(`TrayService`,纯 Win32):显示窗口 / 暂停监听 / 实时统计 / 最近活动 / 数据管理 / 设置 / 检查更新 / 退出;图标按 accent 色 30% tint 渲染
+  - 数据库迁移 v1~v7,启动自动升级,与历史 Python 版库完全兼容(v7 起为纯增量:设备电量样本表)
+- **系统托盘**(`TrayService`,纯 Win32):显示窗口 / 暂停监听 / 实时统计 / 最近活动 / 数据管理 / 🔋 设备电量 / 🤖 AI 额度 / 设置 / 检查更新 / 退出;图标按 accent 色 30% tint 渲染
   - Win11 可能默认把图标收进溢出区(`^`):右键任务栏 → 任务栏设置 → 其他系统托盘图标 → 打开 KeyNote,即可常显在任务栏
 - **应用内更新检查**(`UpdateService`)
   - 设置页「关于」分组「检查更新」+ 托盘「🔄 检查更新」;启动后每日静默检查一次(24h 判重)
@@ -41,7 +55,7 @@
 
 ## 数据存储位置
 
-数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(数据)/ `config.json`(配置)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
+数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(键鼠数据 + 设备电量样本)/ `config.json`(配置)/ `quota.json`(AI 额度配置,API Key 经 DPAPI 加密)/ `quota-cache/`(额度模型列表与试调日志)/ `device_state.json`(设备呈现状态)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
 
 ## 运行(开发模式)
 
@@ -78,6 +92,7 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 | Windows SDK NET Ref | 10.0.19041.38 | WinUI 编译期 |
 | Microsoft.Data.Sqlite | 9.0.0 | SQLite 访问 |
 | System.Drawing.Common | 8.0.7 | 托盘图标 tint 渲染 |
+| System.Security.Cryptography.ProtectedData | 8.0.0 | API Key DPAPI 加密 |
 
 ## 配置(config.json)
 
@@ -90,8 +105,8 @@ key_note/
 ├── KeyNote.sln           # 解决方案
 ├── CHANGELOG.md          # 版本变更记录(Release notes 来源)
 ├── src/
-│   ├── KeyNote.App/      # WinUI3 壳:App / MainWindow / 5 页 / 9 控件 / 9 服务
-│   └── KeyNote.Core/     # 无 UI:AppSettings / KeyNoteDb(4 分部) / InputHookService / AppPaths / CrashLog
+│   ├── KeyNote.App/      # WinUI3 壳:App / MainWindow / 7 页 / 控件 / 服务(托盘/更新/迁移/额度 App 侧)
+│   └── KeyNote.Core/     # 无 UI:AppSettings / KeyNoteDb(6 分部) / InputHookService / Devices(设备域) / Quota(额度域) / Migration
 ├── build.ps1             # 一键构建:publish → 瘦身 → 体积报告 → 安装包 → dist/
 ├── KeyNote_Setup.iss     # Inno Setup 安装脚本
 ├── icon.ico              # 应用 / 托盘图标(蓝色圆环)
@@ -103,7 +118,7 @@ key_note/
 
 | 表 | 说明 |
 |---|---|
-| `schema_version` | 迁移版本(v1~v6,启动自动升级) |
+| `schema_version` | 迁移版本(v1~v7,启动自动升级) |
 | `sessions` | 录制会话(启动 / 结束时间) |
 | `keypresses` | 原始按键记录(受保留策略影响) |
 | `mouse_clicks` | 原始鼠标点击(受保留策略影响) |
@@ -111,6 +126,7 @@ key_note/
 | `agg_dow_hour` | 按(星期,小时)累计(永久) |
 | `agg_key_total` / `agg_key_type_total` | 按键累计 / 键型累计(letter/digit/symbol/function;永久) |
 | `agg_mouse_button_total` | 鼠标按键累计(永久) |
+| `device_battery_samples` | 设备电量样本(v7 增量;受设备保留期影响) |
 
 > `agg_dow_hour` 按(星期,小时)累计,**当前只写不读**(留作作息画像的数据基础)。
 
@@ -131,6 +147,9 @@ key_note/
 
 ## 路线图
 
+- [x] **三合一整合**:并入 VigilWatt 设备电量(BLE/HID 23 插件/电量页/任务栏贴片/悬浮小组件/低电提醒)与 AgentEye AI 额度(8 provider 轮询/额度页/toast 告警/全局快捷键/Acrylic 小组件)
+  - keynote.db v7 增量(设备电量样本表);上游 vigil-watt / AgentEye 自此不再单独维护
+  - 首启自动导入两旧应用数据(`MigrationService`,幂等标记);旧目录只读不动
 - [x] **应用内更新检查**:对接 GitHub Releases(`AetherGazer6244/KeyNote`)
   - 设置页「关于」分组「检查更新」+ 托盘「🔄 检查更新」,启动后每日静默检查一次
   - 比对最新稳定版与当前程序集版本(预发布/草稿排除);发现新版 → 托盘气泡 → 确认框 → 应用内下载 → 自动替换并重启
