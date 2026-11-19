@@ -346,6 +346,27 @@ public sealed partial class SettingsPage : Page
                 mw.UpdateStatus(!App.Instance.Hooks.IsPaused, App.Instance.Hooks.IsRunning);
             }
 
+            // 设备域立即生效(三合一整合):重读 device_* 键 → 阈值/采样间隔/插件开关/贴片/小组件
+            var dev = App.Services;
+            if (dev is not null)
+            {
+                dev.Settings.SyncFromConfig(cfg);
+                dev.ApplyLogSettings();
+                dev.Manager.ApplySettings();
+                KeyNoteDb.SetDeviceRetentionDays(dev.Settings.HistoryRetentionDays);
+                dev.TaskbarBattery?.RefreshFromSettings();
+                if (dev.Settings.WidgetEnabled && dev.Widget is null)
+                {
+                    dev.Widget = new Widgets.WidgetWindow();
+                    dev.Widget.Activate();
+                }
+                else if (!dev.Settings.WidgetEnabled && dev.Widget is not null)
+                {
+                    dev.Widget.Close();
+                    dev.Widget = null;
+                }
+            }
+
             ShowStatus("已保存", ok: true);
         }
         catch (Exception ex)

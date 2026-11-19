@@ -30,6 +30,13 @@ public sealed class AppServices : IDisposable
         History = new DeviceHistoryFacade();
     }
 
+    /// 把 config.json 的 device_log_level / device_log_retention_days 落到设备域日志器(启动与保存后调用)。
+    public void ApplyLogSettings()
+    {
+        if (Enum.TryParse<LogLevel>(Settings.LogLevel, true, out var level)) Log.MinLevel = level;
+        Log.RetentionDays = Settings.LogRetentionDays;
+    }
+
     public void Dispose()
     {
         // 幂等 + 逐个兜底:任一项失败不能连累其余(照搬 vigil AppServices 约定)

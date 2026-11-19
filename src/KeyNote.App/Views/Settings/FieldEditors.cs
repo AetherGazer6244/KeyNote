@@ -62,17 +62,19 @@ public sealed partial class SettingsPage
             ItemsSource = spec.Options,
         };
         var current = _cfg.GetInt(spec.Key, 365);
-        var idx = Array.IndexOf(RetentionValues, current);
-        combo.SelectedIndex = idx >= 0 ? idx : 3;
+        var values = spec.Values ?? RetentionValues;
+        var idx = Array.IndexOf(values, current);
+        // 未命中时回退:主保留期表回 365(下标3),设备样本表回 90(下标1)
+        combo.SelectedIndex = idx >= 0 ? idx : (spec.Values is null ? 3 : 1);
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(combo, spec.Title);
         combo.SelectionChanged += (_, _) =>
         {
-            if (combo.SelectedIndex >= 0 && combo.SelectedIndex < RetentionValues.Length)
+            if (combo.SelectedIndex >= 0 && combo.SelectedIndex < values.Length)
             {
-                _editors[spec.Key] = RetentionValues[combo.SelectedIndex];
+                _editors[spec.Key] = values[combo.SelectedIndex];
             }
         };
-        _editors[spec.Key] = RetentionValues[Math.Max(0, combo.SelectedIndex)];
+        _editors[spec.Key] = values[Math.Max(0, combo.SelectedIndex)];
         return combo;
     }
 

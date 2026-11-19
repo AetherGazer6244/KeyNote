@@ -16,6 +16,7 @@ public sealed partial class SettingsPage
         double Hi = 0,
         double Step = 0,
         string[]? Options = null,
+        int[]? Values = null,
         string? ActionKey = null,
         bool Advanced = false,
         string? Value = null);
@@ -34,6 +35,17 @@ public sealed partial class SettingsPage
         {
             new FieldSpec(FieldKind.Switch, "remember_window_pos", "记住窗口位置", "记住主窗口位置,下次启动恢复。"),
         }),
+        ("设备电量", new[]
+        {
+            new FieldSpec(FieldKind.Switch, "device_monitor_system_battery", "本机电池监控", "把电脑自带电池也纳入电量列表,无无线设备时也有数据可看。"),
+            new FieldSpec(FieldKind.Slider, "device_low_battery_threshold", "低电提醒阈值", "设备电量低于该值时经托盘气泡提醒。", Lo: 5, Hi: 50, Step: 1),
+            new FieldSpec(FieldKind.Switch, "device_remaining_time_enabled", "续航估算", "按近期耗电速度估算无线设备剩余可用时间。"),
+            new FieldSpec(FieldKind.Slider, "device_sample_interval_min", "电量采样间隔", "每隔多少分钟记一条电量历史(设备页曲线的疏密)。", Lo: 1, Hi: 30, Step: 1),
+            new FieldSpec(FieldKind.Combo, "device_history_retention_days", "电量历史保留", "设备电量原始样本的保留时长,到期自动清理。", Options: ["30 天", "90 天", "180 天", "365 天", "730 天"], Values: [30, 90, 180, 365, 730]),
+            new FieldSpec(FieldKind.Switch, "device_widget_enabled", "桌面悬浮小组件", "在桌面显示在线设备的电量角标,可拖动、右键菜单管理。"),
+            new FieldSpec(FieldKind.Switch, "device_taskbar_pill_enabled", "任务栏电量贴片", "在任务栏常驻低电设备电量贴片,双击唤起主窗口。"),
+        }),
+        ("设备插件", DevicePluginFields()),
         ("数据", new[]
         {
             new FieldSpec(FieldKind.Action, "backup_now", "立即备份", "对当前数据库做一致性快照。", ActionKey: "backup", Advanced: true),
@@ -51,4 +63,73 @@ public sealed partial class SettingsPage
     };
 
     private static readonly int[] RetentionValues = [0, 7, 180, 365, 730];
+
+    // ──── 设备插件开关组(三合一整合) ────
+    /// 插件开关从 DeviceSettings 默认表生成,默认值全盘继承 vigil(会写帧的协议一律默认关)。
+    private static FieldSpec[] DevicePluginFields()
+    {
+        var s = Core.Devices.Settings.AppSettings.Load();
+        return s.PluginEnabled
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => new FieldSpec(FieldKind.Switch, $"device_plugin_{kv.Key}",
+                PluginTitle(kv.Key), PluginDesc(kv.Key)))
+            .ToArray();
+    }
+
+    private static string PluginTitle(string name) => name switch
+    {
+        "Logitech" => "罗技 (Logitech)",
+        "Mchose" => "迈从 (Mchose)",
+        "Rapoo" => "雷柏 (Rapoo)",
+        "Betop" => "北通 (Betop)",
+        "Ajazz" => "黑爵 (Ajazz)",
+        "Thunderobot" => "雷神 (Thunderobot)",
+        "Inphic" => "英菲克 (Inphic)",
+        "Darkrim" => "Darkrim",
+        "GameSir" => "盖世小鸡 (GameSir)",
+        "Hecate" => "漫步者 HECATE 有线 (Hecate)",
+        "HecateWireless" => "漫步者无线接收器 (HecateWireless)",
+        "Delux" => "多彩 (Delux)",
+        "Aula" => "狼蛛 (Aula)",
+        "Akg" => "AKG",
+        "DualSense" => "PS5 手柄 (DualSense)",
+        "Ganss" => "GANSS",
+        "Cherry" => "CHERRY",
+        "Pulsar" => "Pulsar",
+        "Eweadn" => "前行者 (Eweadn)",
+        "Razer" => "雷蛇 (Razer)",
+        "SonyInzone" => "索尼 INZONE (SonyInzone)",
+        "Atk" => "ATK",
+        "HyperX" => "HyperX",
+        _ => name,
+    };
+
+    /// 开关说明与 vigil 默认表注释一一对应:默认关的插件查询电量都要写帧。
+    private static string PluginDesc(string name) => name switch
+    {
+        "Logitech" => "罗技 HID++ 非官方协议,会写帧,安全起见默认关。",
+        "Mchose" => "迈从 dongle 协议未公开,探测会写帧,默认关。",
+        "Rapoo" => "只读取不写帧,默认开。",
+        "Betop" => "官方同步只做状态查询,默认开。",
+        "Ajazz" => "需写帧查询电量,默认关。",
+        "Thunderobot" => "需写帧查询电量,默认关。",
+        "Inphic" => "report 0x03 只读不写帧,默认开。",
+        "Darkrim" => "官方同源协议需写帧查询,默认关。",
+        "GameSir" => "需写帧握手才能通,默认关。",
+        "Hecate" => "状态帧只读不写帧,默认开。",
+        "HecateWireless" => "查询需写帧,默认关。",
+        "Delux" => "与英菲克同 VID/PID,协议未验证,默认关。",
+        "Aula" => "轮询需写帧,默认关。",
+        "Akg" => "轮询需写帧,默认关。",
+        "DualSense" => "HID 只读不动手,默认开。",
+        "Ganss" => "轮询需写帧,默认关。",
+        "Cherry" => "开通握手需写帧,默认关。",
+        "Pulsar" => "查询需写帧,默认关。",
+        "Eweadn" => "协议需写查询帧,默认关。",
+        "Razer" => "feature 查询需写帧,默认关。",
+        "SonyInzone" => "控制传输查询需写帧,默认关。",
+        "Atk" => "查询需写帧,默认关。",
+        "HyperX" => "只读不写帧,默认开。",
+        _ => "开关该品牌的电量探测。",
+    };
 }

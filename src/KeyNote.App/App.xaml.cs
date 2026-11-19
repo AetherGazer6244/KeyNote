@@ -124,6 +124,7 @@ public partial class App : Application
 
         // 设备域启动(三合一整合):插件开关在 config.json device_plugin_*;低电提醒经托盘气泡
         Services = new AppServices();
+        Services.ApplyLogSettings();
         Services.Manager.Start();
         Services.Manager.LowBatteryDetected += device =>
             Services.NotifyLowBattery?.Invoke($"「{device.DisplayName}」电量低({device.BatteryPercent}%),请及时充电");
