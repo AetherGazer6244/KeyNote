@@ -16,6 +16,7 @@ internal static class UiColors
     public static readonly Windows.UI.Color Danger = Hex("#E2445C");
     public static readonly Windows.UI.Color Offline = Hex("#8E8E93");
     public static readonly Windows.UI.Color Source24G = Hex("#AF52DE");
+    public static readonly Windows.UI.Color SourceSystem = Hex("#30B0C7");
     public static readonly Windows.UI.Color Border = Hex("#3D3D3D");
     public static readonly Windows.UI.Color Divider = Hex("#2F2F2F");
     public static readonly Windows.UI.Color ChartFace = Hex("#272727");
@@ -28,6 +29,12 @@ internal static class UiColors
     public static readonly Windows.UI.Color HeatmapL2 = Hex("#006D32");
     public static readonly Windows.UI.Color HeatmapL3 = Hex("#26A641");
     public static readonly Windows.UI.Color HeatmapL4 = Hex("#39D353");
+
+    // ──── AI 额度等级色(AgentEye 语义) ────
+    public static readonly Windows.UI.Color QuotaOk = Hex("#34C759");
+    public static readonly Windows.UI.Color QuotaWarn = Hex("#FAA817");
+    public static readonly Windows.UI.Color QuotaCritical = Hex("#E2445C");
+    public static readonly Windows.UI.Color QuotaPaused = Hex("#8E8E93");
 
     public static Windows.UI.Color Hex(string hex)
     {

@@ -1,20 +1,23 @@
 # 项目风格指南 — KeyNote(WinUI3 / C#)
 
 ## 核心理念
-- **简洁小巧** — 不堆功能,不建多余工程,不改技术栈
-- **Windows 单机工具** — Win32 LL 钩子 + SQLite 持久化 + WinUI3 界面 + 纯 Win32 托盘
+- **桌面观测台** — 键鼠使用统计 + 无线设备电量 + AI API 额度,三域一体的 Windows 单机工具
+- **简洁聚焦** — 不堆功能,不建多余工程,不改技术栈
+- **Windows 单机工具** — Win32 LL 钩子 + BLE/HID 设备监听 + API 轮询 + SQLite 持久化 + WinUI3 界面 + 纯 Win32 托盘
 
 ## 架构约束
 - 技术栈锁定:`net8.0-windows10.0.19041.0` + Windows App SDK 1.7(`WindowsPackageType=None` 非打包 + `WindowsAppSDKSelfContained=true`)
 - 双工程:`src/KeyNote.App`(WinUI 壳 + 页面 + 控件)与 `src/KeyNote.Core`(无 UI:设置 / 存储 / 钩子 / 工具)
 - 主窗口硬编码 800×600(按 DPI 缩放),不响应式
-- 布局:48px 通栏标题栏(状态胶囊)+ NavigationView 左侧导航(5 页)+ 内容区,切换走 `App._switch_page` 等价的 `MainWindow.NavigateTo(tag)`
-- 5 页侧边栏导航(Segoe 字形图标 + NavigationView 默认选中态)
+- 布局:48px 通栏标题栏(状态胶囊)+ NavigationView 左侧导航(7 页)+ 内容区,切换走 `App._switch_page` 等价的 `MainWindow.NavigateTo(tag)`
+- 7 页侧边栏导航(Segoe 字形图标 + NavigationView 默认选中态,分「键鼠 / 设备 / 额度」三组 header)
   - Page 1 `StatsPage`(`Views/StatsPage`):页头 + 时间筛选(SelectorBar)+ 3 张 KPI 卡(随筛选口径)+ 趋势图(悬停十字线)
   - Page 2 `KeyboardPage`(`Views/KeyboardPage`):7×24 活跃度热力图 + QWERTY 键盘热力图
   - Page 3 `HeatmapPage`(`Views/HeatmapPage`):GH 年度热力图(列数按 heatmap_days 动态)
   - Page 4 `TopKeysPage`(`Views/TopKeysPage`):Top 10 按键条形图(合并大小写口径)
-  - Page 5 `SettingsPage`(`Views/SettingsPage`):声明式字段表(分组/搜索/固定底栏)
+  - Page 5 `DevicesPage`(`Views/DevicesPage`):设备电量列表(电量条 + 来源徽标)+ KPI 卡 + 单设备 24h 趋势(展开行)
+  - Page 6 `QuotaPage`(`Views/QuotaPage`):AI 额度 provider 卡片(等级色点 + 进度条 + 重置倒计时 + 行内刷新)
+  - Page 7 `SettingsPage`(`Views/SettingsPage`):声明式字段表(分组/搜索/固定底栏)
 - 页面骨架统一:页头固定行(不随内容滚走)+ 内容滚动行;数据页统一 `Views/PageRefresh.Wire` 接线
 - auto-refresh 只刷新当前页(设置页不实现 `IRefreshable`,自然跳过)
 - ⚙ 入口(托盘菜单)统一走 `MainWindow.NavigateTo("settings")`
@@ -107,13 +110,14 @@
 - **不建新工程**;扩功能优先走现有模块(加控件 / 加字段 / 加服务方法)
 - `build.ps1` 删发布目录只删 `build/publish/`,**禁止** `Remove-Item build/`(会把 `build/_data_bak/` 用户备份一起删)
 - 配色 / 状态色写 `Theme/UiColors.cs` 或页面顶部常量,不散落字面量
-- 数据库 schema 与 Python 版保持一致(v1~v6),不破坏既有 `keynote.db`
+- 数据库 schema 与 Python 版保持一致(v1~v6);v7 起为**纯增量扩展**(设备电量样本表),v1~v6 表结构与数据一律不动,不破坏既有 `keynote.db`
 - WinUI3 非打包窗口不支持整窗透明:`window_alpha` 退化为**内容区**不透明度,不得宣称整窗透明
 - **安装包不得夹带用户数据**:ISCC 只打包 `build/setup_stage`(发布产物),`keynote.db*` / `config.json` / `backups/` 一律排除
 - 安装位置可选:目录页始终显示(升级预填旧目录亦可改,换目录提示旧目录不自动清理),目录页校验所选位置可写性;数据目录固定 `%LOCALAPPDATA%\KeyNote` 不随安装位置走;静默更新必须显式传 `/DIR` 锁定当前安装目录
 - 改键型分类或统计口径时,必须在 README「统计口径变更」记一笔
 
 ## 待办(TODO)
+- [ ] **三合一整合**(`feature/merge-vigilwatt-agenteye`):并入 VigilWatt 设备电量(领域层/电量页/任务栏贴片/悬浮小组件/低电提醒)与 AgentEye AI 额度(8 provider 轮询/额度页/toast 告警/全局快捷键/Acrylic 小组件);keynote.db v7 增量;首启自动导入两旧应用数据;上游 evren-oct/vigil-watt 自此放弃同步
 - [x] ~~应用内更新检查~~:已实现(`Services/UpdateService.cs` + 设置页「关于」分组 + 托盘入口 + 启动每日静默检查)
 - [x] ~~应用内静默更新~~:已实现(`UpdateInstaller` + `UpdatePrompt` + `UpdateServiceApp`:应用内下载 → 大小校验 → 拉起安装器自动替换并重启)
 - [ ] **发布体积瘦身**(低优先级):`dist` 95MB 中约 88MB 是 Windows App SDK 运行时,自包含零依赖是既定路线。对标 MAA(MaaWpfGui 同为 `SelfContained=true` + `PublishTrimmed=false`,发行数百 MB 不裁剪),维持现状是 .NET GUI 正解;如仍想省,只剩逐文件裁剪实验(约 60 文件 / 12MB,每次升级 SDK 需重验)
