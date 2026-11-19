@@ -7,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace KeyNote.Core.Storage;
 
-/// 数据库迁移 v1~v6(与历史 Python 版库兼容)与会话记录。
+/// 数据库迁移:v1~v6 与历史 Python 版库兼容,v7 起为纯增量扩展(设备电量样本);含会话记录。
 public static partial class KeyNoteDb
 {
 
@@ -22,6 +22,7 @@ public static partial class KeyNoteDb
         if (current < 4) MigrateToV4();
         if (current < 5) MigrateToV5();
         if (current < 6) MigrateToV6();
+        if (current < 7) MigrateToV7();
     }
 
     private static void MigrateToV1()
@@ -117,6 +118,25 @@ public static partial class KeyNoteDb
     {
         Exec("CREATE TABLE IF NOT EXISTS agg_key_type_total (type TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0)");
         Exec("INSERT INTO schema_version(version, applied_at) VALUES (6, " + NowMs() + ")");
+    }
+
+    /// v7(三合一整合):设备电量样本表,纯增量——不触碰 v1~v6 任何表。
+    private static void MigrateToV7()
+    {
+        Exec("""
+            CREATE TABLE IF NOT EXISTS device_battery_samples (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id TEXT    NOT NULL,
+                name      TEXT    NOT NULL,
+                kind      INTEGER NOT NULL DEFAULT 0,
+                percent   INTEGER NOT NULL,
+                charging  INTEGER NOT NULL,
+                ts        INTEGER NOT NULL
+            )
+            """);
+        Exec("CREATE INDEX IF NOT EXISTS idx_devbat_device_ts ON device_battery_samples(device_id, ts)");
+        Exec("CREATE INDEX IF NOT EXISTS idx_devbat_ts ON device_battery_samples(ts)");
+        Exec("INSERT INTO schema_version(version, applied_at) VALUES (7, " + NowMs() + ")");
     }
 
     private static bool TableHasColumn(string table, string column)

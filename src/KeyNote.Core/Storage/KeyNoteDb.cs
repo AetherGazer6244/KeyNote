@@ -41,7 +41,10 @@ public static partial class KeyNoteDb
         }
     }
 
-    private readonly record struct WriteItem(double Ts, char Kind, string Payload, string KeyType);
+    private readonly record struct WriteItem(double Ts, char Kind, string Payload, string KeyType, DeviceRow? Device = null);
+
+    /// 设备电量样本行(Kind='d' 时携带)。
+    internal readonly record struct DeviceRow(string DeviceId, string Name, int Kind, int Percent, int Charging);
 
     // ──── 初始化 ────
     public static void Init(AppSettings cfg)
@@ -59,6 +62,7 @@ public static partial class KeyNoteDb
             var batchSize = Math.Max(1, cfg.GetInt("db_flush_batch_size", 200));
             var interval = Math.Max(0.05, cfg.GetDouble("db_flush_interval_sec", 1.0));
             _retentionDays = Math.Max(0, cfg.GetInt("db_retention_days", 365));
+            SetDeviceRetentionDays(Math.Max(0, cfg.GetInt("device_history_retention_days", 90)));
 
             _conn = new SqliteConnection(new SqliteConnectionStringBuilder
             {

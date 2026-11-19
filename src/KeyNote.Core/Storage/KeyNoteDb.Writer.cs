@@ -86,6 +86,7 @@ public static partial class KeyNoteDb
     {
         var kRows = new List<object?[]>();
         var mRows = new List<object?[]>();
+        var dRows = new List<object?[]>();
         var minute = new Dictionary<long, long>();
         var hour = new Dictionary<long, long>();
         var dowHour = new Dictionary<(int, int), long>();
@@ -121,6 +122,10 @@ public static partial class KeyNoteDb
                 mRows.Add(new object?[] { tsMs, item.Payload, sid });
                 mouse[item.Payload] = mouse.GetValueOrDefault(item.Payload) + 1;
             }
+            else if (item.Kind == 'd' && item.Device is { } dev)
+            {
+                dRows.Add(new object?[] { dev.DeviceId, dev.Name, dev.Kind, dev.Percent, dev.Charging, tsMs });
+            }
         }
 
         try
@@ -140,6 +145,11 @@ public static partial class KeyNoteDb
             {
                 ExecRows(tx, "INSERT INTO mouse_clicks (ts, button, session_id) VALUES ", "", 3, mRows);
                 UpsertTextBuckets(tx, "agg_mouse_button_total", "button", mouse);
+            }
+            if (dRows.Count > 0)
+            {
+                ExecRows(tx, "INSERT INTO device_battery_samples(device_id, name, kind, percent, charging, ts) VALUES ",
+                    "", 6, dRows);
             }
             tx.Commit();
             Interlocked.Exchange(ref _writeFailures, 0);
@@ -260,6 +270,20 @@ public static partial class KeyNoteDb
         catch (Exception ex)
         {
             CrashLog.Write("db.cleanup", ex);
+        }
+        // 设备样本走独立保留期(device_history_retention_days),按键侧归零不影响它
+        var devDays = Interlocked.CompareExchange(ref _deviceRetentionDays, 0, 0);
+        if (devDays > 0)
+        {
+            try
+            {
+                Exec(_writerConn!, "DELETE FROM device_battery_samples WHERE ts < $cut",
+                    ("$cut", NowMs() - devDays * 86_400_000L));
+            }
+            catch (Exception ex)
+            {
+                CrashLog.Write("db.device.cleanup", ex);
+            }
         }
     }
 }
