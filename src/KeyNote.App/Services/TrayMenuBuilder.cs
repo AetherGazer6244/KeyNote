@@ -1,6 +1,7 @@
 using System.Text;
 using KeyNote.App.Helpers;
 using KeyNote.Core.Devices.Models;
+using KeyNote.Core.Quota.Providers;
 using KeyNote.Core.Storage;
 
 namespace KeyNote.App.Services;
@@ -20,6 +21,7 @@ internal static class TrayMenuBuilder
     // 三合一整合新增区段:设备 100~119 / 额度 120~139 / 悬浮窗开关 140~142 / 页面直达 150+
     public const int IdDeviceBase = 100;
     public const int IdQuotaBase = 120;
+    public const int IdQuotaRefresh = 120;
     public const int IdToggleDeviceWidget = 140;
     public const int IdToggleQuotaWidget = 141;
     public const int IdToggleTaskbarPill = 142;
@@ -89,6 +91,7 @@ internal static class TrayMenuBuilder
         Append(menu, TrayNative.MfPopup, (uint)data, "📊 数据管理");
 
         Append(menu, TrayNative.MfPopup, (uint)DeviceMenu(), "🔋 设备电量");
+        Append(menu, TrayNative.MfPopup, (uint)QuotaMenu(), "🤖 AI 额度");
 
         Append(menu, TrayNative.MfSeparator, 0, null);
         Append(menu, TrayNative.MfString, IdQuit, "退出");
@@ -155,6 +158,59 @@ internal static class TrayMenuBuilder
         DeviceKind.Computer => "💻",
         _ => "🔋",
     };
+
+    /// 额度子菜单:provider 额度一览(灰显) + 立即刷新 / 悬浮小组件开关 / 额度页直达。
+    private static nint QuotaMenu()
+    {
+        var q = TrayNative.CreatePopupMenu();
+        var rows = QuotaRows();
+        if (rows.Count == 0)
+        {
+            Append(q, TrayNative.MfString | TrayNative.MfGrayed, 0, "无 provider");
+        }
+        else
+        {
+            foreach (var row in rows)
+                Append(q, TrayNative.MfString | TrayNative.MfGrayed, 0, row);
+        }
+        Append(q, TrayNative.MfSeparator, 0, null);
+
+        Append(q, TrayNative.MfString, IdQuotaRefresh, "立即刷新");
+        var services = App.Quotas;
+        var widgetOn = services?.WidgetVisible == true;
+        Append(q, TrayNative.MfString | (widgetOn ? TrayNative.MfChecked : 0),
+            IdToggleQuotaWidget, "悬浮小组件");
+        Append(q, TrayNative.MfString, IdOpenQuota, "打开额度页…");
+        return q;
+    }
+
+    /// provider 额度行(最多 8 行):等级符号 + 名称 + 用量。
+    private static List<string> QuotaRows()
+    {
+        var rows = new List<string>();
+        try
+        {
+            var quotas = App.Quotas;
+            if (quotas is null) return rows;
+            rows = quotas.Results.Take(8)
+                .Select(r =>
+                {
+                    var level = r.Paused || r.Level == Levels.Paused ? "⏸" : r.Level switch
+                    {
+                        Levels.Ok => "✓",
+                        Levels.Warn => "⚠",
+                        Levels.Critical => "‼",
+                        Levels.Error => "✗",
+                        _ => "—",
+                    };
+                    var usage = r.Pct is not null ? $"{Http.F0(r.Pct.Value)}%" : r.Detail;
+                    return $"{level} {r.Name}  {usage}";
+                })
+                .ToList();
+        }
+        catch { /* 托盘线程取数失败不阻塞菜单 */ }
+        return rows;
+    }
 
     private static void Append(nint menu, uint flags, uint id, string? text)
     {

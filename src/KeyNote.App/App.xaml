@@ -107,6 +107,25 @@
             <SolidColorBrush x:Key="ChartTipBackgroundBrush" Color="#F21C1C1C" />
             <SolidColorBrush x:Key="ChartTipBorderBrush" Color="#FF3D3D3D" />
             <SolidColorBrush x:Key="ChartTipForegroundBrush" Color="#FFFFFFFF" />
+
+            <!-- vigil 移植页页头别名(vigil 原版令牌名,与 PageTitle/PageSubTitle 同款规格) -->
+            <Style x:Key="AppPageTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource PageTitleStyle}" />
+            <Style x:Key="AppPageSubtitleStyle" TargetType="TextBlock" BasedOn="{StaticResource PageSubTitleStyle}" />
+
+            <!-- 危险/错误色(供 XAML StaticResource 使用;C# 侧走 UiColors.Danger) -->
+            <SolidColorBrush x:Key="AppDangerBrush" Color="#E2445C" />
+
+            <!-- ──── 额度域画刷(AgentEye 移植,KeyNote 暗色锁定,值与 UiColors 同源) ──── -->
+            <SolidColorBrush x:Key="AeTextPrimaryBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AeTextSecondaryBrush" Color="#C5C5C5" />
+            <SolidColorBrush x:Key="AeSubtleFillBrush" Color="#272727" />
+            <SolidColorBrush x:Key="AeCardBrush" Color="#272727" />
+            <SolidColorBrush x:Key="AeCardStrokeBrush" Color="#3D3D3D" />
+            <SolidColorBrush x:Key="AeOkBrush" Color="#34C759" />
+            <SolidColorBrush x:Key="AeWarnBrush" Color="#FAA817" />
+            <SolidColorBrush x:Key="AeCriticalBrush" Color="#E2445C" />
+            <SolidColorBrush x:Key="AeErrorBrush" Color="#E2445C" />
+            <SolidColorBrush x:Key="AePausedBrush" Color="#8E8E93" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

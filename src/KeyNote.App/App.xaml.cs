@@ -22,6 +22,12 @@ public partial class App : Application
     /// 设备域组合根(三合一整合):设备页/贴片/小组件/托盘低电提醒统一经此取服务
     public static AppServices Services { get; private set; } = null!;
 
+    /// 额度域组合根(三合一整合):轮询/告警/小组件/全局快捷键统一经此取服务
+    public static QuotaService Quotas { get; private set; } = null!;
+
+    /// 额度全局快捷键(唤醒/收起额度小组件;配置在 quota.json ui.hotkey)
+    public QuotaHotkeyService? QuotaHotkey { get; private set; }
+
     private bool _quitting;
     private int _idlePauseMin;
     private DateTime _lastActivity = DateTime.Now;
@@ -129,6 +135,13 @@ public partial class App : Application
         Services.Manager.LowBatteryDetected += device =>
             Services.NotifyLowBattery?.Invoke($"「{device.DisplayName}」电量低({device.BatteryPercent}%),请及时充电");
 
+        // 额度域启动(三合一整合):quota.json + DPAPI;告警 toast 失败降级托盘气泡
+        Quotas = new QuotaService();
+        QuotaHotkey = new QuotaHotkeyService(() => Quotas.ToggleWidget());
+        QuotaHotkey.Apply(Quotas.HotkeyText, Quotas.HotkeyEnabled);
+        Quotas.Poller.Start();
+        _ = Quotas.Poller.RefreshNowAsync();
+
         var window = new MainWindow();
         WindowService.Current = window;
         window.Activate();
@@ -158,6 +171,11 @@ public partial class App : Application
             {
                 window.ShowMainWindow();
                 window.NavigateTo("devices");
+            },
+            OnOpenQuota = () =>
+            {
+                window.ShowMainWindow();
+                window.NavigateTo("quota");
             },
             OnCheckUpdate = () => CheckUpdateManually(window),
             OnBalloonClicked = () => OnUpdateBalloonClicked(window),
@@ -209,6 +227,9 @@ public partial class App : Application
         {
             Services.TaskbarBattery = new TaskbarPillManager();
         }
+
+        // 额度悬浮小组件(按 quota.json ui.widget 恢复)
+        if (Quotas.WidgetEnabled) Quotas.ApplyWidgetState();
     }
 
     private bool HasArg(string name)
@@ -372,6 +393,9 @@ public partial class App : Application
         if (_quitting) return;
         _quitting = true;
         try { Services?.Dispose(); } catch { /* 退出兜底 */ }
+        try { Quotas?.ShutdownWidget(); } catch { /* 退出兜底 */ }
+        try { Quotas?.Poller.Dispose(); } catch { /* 退出兜底 */ }
+        try { QuotaHotkey?.Dispose(); } catch { /* 退出兜底 */ }
         try { KeyNoteDb.Close(); } catch (Exception ex) { CrashLog.Write("db.close", ex); }
         try { Tray.Stop(); } catch { /* 忽略 */ }
         try { Hooks.Dispose(); } catch { /* 忽略 */ }
