@@ -28,7 +28,7 @@
             </StackPanel>
         </Grid>
 
-        <!-- 左侧导航:5 页(材质生效时 pane/content 全透明,让 Mica 直透整窗) -->
+        <!-- 左侧导航:7 页,分「键鼠 / 设备 / 额度」三组(材质生效时 pane/content 全透明) -->
         <NavigationView
             x:Name="Nav"
             Grid.Row="1"
@@ -47,6 +47,7 @@
                 </ResourceDictionary>
             </NavigationView.Resources>
             <NavigationView.MenuItems>
+                <NavigationViewItemHeader Content="键鼠" />
                 <NavigationViewItem Content="统计" Tag="stats">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="{StaticResource StatsGlyph}" />
@@ -65,6 +66,18 @@
                 <NavigationViewItem Content="排行" Tag="topkeys">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="{StaticResource TopKeysGlyph}" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemHeader Content="设备" />
+                <NavigationViewItem Content="电量" Tag="devices">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="{StaticResource DevicesGlyph}" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemHeader Content="额度" />
+                <NavigationViewItem Content="AI 额度" Tag="quota">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="{StaticResource QuotaGlyph}" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="设置" Tag="settings">

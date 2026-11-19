@@ -211,6 +211,8 @@ public sealed partial class MainWindow : Window
             "keyboard" => typeof(Views.KeyboardPage),
             "heatmap" => typeof(Views.HeatmapPage),
             "topkeys" => typeof(Views.TopKeysPage),
+            "devices" => typeof(Views.DevicesPage),
+            "quota" => typeof(Views.QuotaPage),
             "settings" => typeof(Views.SettingsPage),
             _ => typeof(Views.StatsPage),
         };

@@ -94,6 +94,8 @@
             <x:String x:Key="KeyboardGlyph">&#xE765;</x:String>
             <x:String x:Key="HeatmapGlyph">&#xE787;</x:String>
             <x:String x:Key="TopKeysGlyph">&#xE734;</x:String>
+            <x:String x:Key="DevicesGlyph">&#xE74D;</x:String>
+            <x:String x:Key="QuotaGlyph">&#xE946;</x:String>
             <x:String x:Key="SettingsGlyph">&#xE713;</x:String>
 
             <!-- 徽标胶囊:语义色文字 + 16% tint 底 radius 4(XAML 原生支持 alpha) -->

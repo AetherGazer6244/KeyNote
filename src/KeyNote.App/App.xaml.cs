@@ -128,6 +128,9 @@ public partial class App : Application
             CrashLog.Write("db.init", ex);
         }
 
+        // 旧应用数据首启导入(三合一整合):vigil 电量历史 → keynote.db;AgentEye 配置/缓存 → quota.json
+        KeyNote.Core.Migration.MigrationService.Run(Settings);
+
         // 设备域启动(三合一整合):插件开关在 config.json device_plugin_*;低电提醒经托盘气泡
         Services = new AppServices();
         Services.ApplyLogSettings();
