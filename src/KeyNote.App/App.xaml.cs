@@ -108,6 +108,10 @@ public partial class App : Application
     public App()
     {
         Instance = this;
+        // UI 线程装上下文：此后所有 await 续体自动回 UI 线程（详见 Helpers/UiSynchronizationContext.cs）
+        // 必须在 InitializeComponent 之前——XAML 初始化链路里就可能发起异步操作
+        SynchronizationContext.SetSynchronizationContext(
+            new Helpers.UiSynchronizationContext(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()));
         InitializeComponent();
         RequestedTheme = ApplicationTheme.Dark;
         UnhandledException += OnUnhandledException;
