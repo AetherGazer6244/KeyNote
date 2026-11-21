@@ -2,6 +2,12 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.1] - 2026-11-21
+
+### 修复
+
+- 设备电量页:手动刷新与删除设备的 async 收尾在后台线程直碰控件(`WinUI3` UI 线程无 `SynchronizationContext`,Task 续体不会自动回 UI 线程),触发 `0x8001010E` 后经 `async void` 未捕获直接终止进程;刷新收尾与删除确认链路现显式 `DispatcherQueue.TryEnqueue` 编组回 UI 线程(实机验证时以 .NET Runtime 1026 事件定位)
+
 ## [1.3.0] - 2026-11-19
 
 三合一整合:并入 VigilWatt 设备电量与 AgentEye AI 额度,KeyNote 升级为「键鼠统计 + 设备电量 + AI 额度」一体的桌面观测台。不改既有统计口径,v1~v6 表结构与数据一律不动(v7 起纯增量)。
