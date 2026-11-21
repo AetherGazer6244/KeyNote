@@ -46,6 +46,9 @@
 - **数据隐私**
   - 只记录按键名 + 时间戳,**不记录**窗口 / 应用名 / 剪贴板 / 按键上下文
   - 数据完全本地,默认存到 `%LOCALAPPDATA%\KeyNote\`
+- **运行日志**(`logs/` 按天滚动,保留 14 天)
+  - 记录启动 / 钩子 / 额度 / 更新等关键事件与错误(设置页可关),崩溃记录 `keynote.crash.log` 独立保留
+  - 排查问题:设置页「数据」→「打开日志文件夹」,把当天 `app-*.log` 发给开发者即可
 
 ## 安装
 
@@ -56,7 +59,7 @@
 
 ## 数据存储位置
 
-数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(键鼠数据 + 设备电量样本)/ `config.json`(配置)/ `quota.json`(AI 额度配置,API Key 经 DPAPI 加密)/ `quota-cache/`(额度模型列表与试调日志)/ `device_state.json`(设备呈现状态)/ `backups/`(备份)/ `keynote.crash.log`(异常日志)。
+数据存到 `%LOCALAPPDATA%\KeyNote\`(需要改位置时手编 `config.json` 的 `data_dir`,重启生效),目录内含 `keynote.db`(键鼠数据 + 设备电量样本)/ `config.json`(配置)/ `quota.json`(AI 额度配置,API Key 经 DPAPI 加密)/ `quota-cache/`(额度模型列表与试调日志)/ `device_state.json`(设备呈现状态)/ `backups/`(备份)/ `logs/`(运行日志,按天滚动)/ `keynote.crash.log`(异常日志)。
 
 ## 运行(开发模式)
 

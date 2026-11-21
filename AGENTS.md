@@ -66,6 +66,13 @@
 |---|---|
 | `src/KeyNote.Core/Input/InputHookService.cs` | Win32 LL 钩子 + 按键分类(letter/digit/symbol/function)+ 键盘状态自维护(大小写/AltGr)+ 按物理按下计数 + 暂停/恢复 |
 
+### 3.5 日志(事件时间线)
+| 文件 | 职责 |
+|---|---|
+| `src/KeyNote.Core/Utils/AppLog.cs` | 运行日志门面:带 tag 的 Info/Warn/Error 落盘,`app_log_enabled` 开关实时生效;全部委托 Devices.Log(按天文件/清理/兜底) |
+| `src/KeyNote.Core/Utils/CrashLog.cs` | 崩溃记录 keynote.crash.log(永开,不受开关影响);异常同步进 AppLog 时间线 |
+| `src/KeyNote.Core/Devices/Log.cs` | vigil 移植的日志实现:logs/app-yyyy-MM-dd.log,按天滚动 + 保留清理 + 失败兜底 + 降噪(OnChange/Throttled/Once) |
+
 ### 4. 数据持久化
 | 文件 | 职责 |
 |---|---|
