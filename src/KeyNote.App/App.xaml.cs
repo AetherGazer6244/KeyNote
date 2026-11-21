@@ -276,7 +276,7 @@ public partial class App : Application
             {
                 try
                 {
-                    var info = await UpdateService.CheckAsync();
+                    var info = await UpdateService.CheckAsync(silent: true);
                     // 仅成功才记每日时间戳:网络失败不该被 24h 静默窗吞掉
                     if (info.Ok) RecordUpdateCheckTime();
                     if (!info.HasUpdate) return;

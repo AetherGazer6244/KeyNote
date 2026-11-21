@@ -19,41 +19,24 @@ public sealed class BluetoothClassicWatcher : IDisposable
 
     public event Action<DeviceStatus>? DeviceUpdated;
 
-    /// <summary>电量属性候选：AepBattery_Level 在本机 BLE selector 下不可用（runtime-pitfalls §3），
-    /// 经典蓝牙 selector 下值得实测一次；抛异常就自动回退到只显示连接状态，无副作用。</summary>
-    private static readonly string[][] BatteryPropCandidates =
-    {
-        new[] { WatcherProps.Name, "System.Devices.AepBattery_Level", WatcherProps.Connected },
-        new[] { WatcherProps.Name, WatcherProps.Connected },
-    };
-
-    private string? _batteryProp;
-
     public void Start()
     {
         if (_started) return;
         _started = true;
 
+        // ⚠️ AepBattery_Level 不是合法的 watcher 属性键（BLE 侧 2026-11-21 实测，四个写法全抛
+        // "Property key syntax error"，runtime-pitfalls §3 同源）。watcher 只订 Name + IsConnected；
+        // 电量走 HFP 网关设备节点的 DEVPKEY_Device_BatteryLevel（TryGetDevNodeInfo，见 HandleDevice）。
         var selector = BluetoothDevice.GetDeviceSelector();
-        DeviceWatcher? watcher = null;
-        foreach (var props in BatteryPropCandidates)
+        DeviceWatcher? watcher;
+        try
         {
-            try
-            {
-                watcher = DeviceInformation.CreateWatcher(selector, props, DeviceInformationKind.AssociationEndpoint);
-                if (props.Length == 3) _batteryProp = props[1];
-                Log.Info($"经典蓝牙 watcher 属性集可用: {string.Join(", ", props)}");
-                break;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"经典蓝牙 watcher 属性集不可用 [{string.Join(", ", props)}]: {ex.Message}");
-                watcher = null;
-            }
+            watcher = DeviceInformation.CreateWatcher(
+                selector, new[] { WatcherProps.Name, WatcherProps.Connected }, DeviceInformationKind.AssociationEndpoint);
         }
-        if (watcher == null)
+        catch (Exception ex)
         {
-            Log.Error("经典蓝牙 DeviceWatcher 无法创建，经典蓝牙监控不可用");
+            Log.Error($"经典蓝牙 DeviceWatcher 创建失败，经典蓝牙监控不可用: {ex.Message}");
             return;
         }
 
@@ -103,10 +86,8 @@ public sealed class BluetoothClassicWatcher : IDisposable
         // 设备节点信息一次取全：电量 + Windows 设备类别 + 服务 UUID（类型判定要用；整表 5 秒缓存）
         var nodeInfo = TryGetDevNodeInfo(id);
 
-        int? percent = WatcherProps.ReadBattery(props, _batteryProp);
-
-        // AEP 属性拿不到时，走 HFP 网关设备节点的 DEVPKEY_Device_BatteryLevel
-        percent ??= nodeInfo?.BatteryPercent;
+        // watcher 属性集里没有电量（见 Start 注释），电量来自 HFP 网关设备节点
+        int? percent = nodeInfo?.BatteryPercent;
 
         if (status == null)
         {

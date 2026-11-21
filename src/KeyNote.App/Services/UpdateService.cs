@@ -68,7 +68,9 @@ public static class UpdateService
         Assembly.GetExecutingAssembly().Location) ?? AppContext.BaseDirectory;
 
     // ──── 检查入口 ────
-    public static async Task<UpdateInfo> CheckAsync(string? endpoint = null)
+    /// <param name="silent">每日静默检查传 true：失败（网络不可达等）不写 crash.log，只置状态文本。
+    /// 否则无代理环境每次启动都会刷一条 SSL 异常日志（2026-11-21 实机验证确认的噪音源）。</param>
+    public static async Task<UpdateInfo> CheckAsync(string? endpoint = null, bool silent = false)
     {
         var current = CurrentVersion;
         try
@@ -102,12 +104,12 @@ public static class UpdateService
         }
         catch (HttpRequestException ex)
         {
-            CrashLog.Write("update.check", ex);
+            if (!silent) CrashLog.Write("update.check", ex);
             return Publish(Fail(current, "网络不可用,检查失败"));
         }
         catch (Exception ex)
         {
-            CrashLog.Write("update.check", ex);
+            if (!silent) CrashLog.Write("update.check", ex);
             return Publish(Fail(current, "检查失败"));
         }
     }

@@ -58,7 +58,7 @@ public static class ZhipuProvider
         };
         var success = Http.Obj(body, "success") is { ValueKind: System.Text.Json.JsonValueKind.False };
         if ((codeStr is not null && codeStr != "200") || success)
-            return FetchPayload.Err(L.F("pr.apiError", Http.Str(body, "msg") ?? codeStr ?? "?"));
+            return FetchPayload.Err(L.F("pr.apiError", ApiErrorText.Humanize(Http.Str(body, "msg") ?? codeStr ?? "?")));
 
         var data = Http.Obj(body, "data") is { ValueKind: System.Text.Json.JsonValueKind.Object }
             ? Http.Obj(body, "data")!.Value : default;

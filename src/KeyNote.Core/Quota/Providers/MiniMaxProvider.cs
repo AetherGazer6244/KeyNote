@@ -135,7 +135,7 @@ public static partial class MiniMaxProvider
         if (statusCode is not null && statusCode != 0)
         {
             var msg = Http.Str(baseObj, "status_msg") ?? statusCode.ToString();
-            return FetchPayload.Err(L.F("pr.apiError", msg));
+            return FetchPayload.Err(L.F("pr.apiError", ApiErrorText.Humanize(msg)));
         }
 
         var items = ExtractItems(body);

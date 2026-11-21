@@ -35,7 +35,7 @@ public static class SiliconFlowProvider
         var code = Http.Num(body, "code");
         if (code is { } c && (int)c != 200)
             return FetchPayload.Err(L.F("pr.apiError",
-                Http.Str(body, "message") ?? Http.Str(body, "msg") ?? $"{c}"));
+                ApiErrorText.Humanize(Http.Str(body, "message") ?? Http.Str(body, "msg") ?? $"{c}")));
 
         var data = Http.Obj(body, "data");
         if (data is null || data.Value.ValueKind != System.Text.Json.JsonValueKind.Object)

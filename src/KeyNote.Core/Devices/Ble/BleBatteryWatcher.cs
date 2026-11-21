@@ -21,45 +21,32 @@ public sealed class BleBatteryWatcher : IDisposable
     /// <summary>已经问过 AEP Category 的设备（每台一次，结果覆盖名字猜测）。</summary>
     private readonly ConcurrentDictionary<string, byte> _kindQueried = new();
     private const string CategoryKey = "System.Devices.Aep.Category";
+    private const string AepBatteryKey = "System.Devices.AepBattery_Level";
     private readonly SemaphoreSlim _gattGate = new(1, 1);
 
+    /// <summary>每台设备 AEP 缓存电量的查询节流。</summary>
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastAepProbe = new();
+
     public event Action<DeviceStatus>? DeviceUpdated;
-
-    /// <summary>不同 Windows 版本的电量属性名不同，逐个尝试，成功的组合记下来。</summary>
-    private static readonly string[][] BatteryPropCandidates =
-    {
-        new[] { WatcherProps.Name, "System.Devices.AepBattery_Level", WatcherProps.Connected },
-        new[] { WatcherProps.Name, "System.Devices.Aep.Battery_Level", WatcherProps.Connected },
-        new[] { WatcherProps.Name, WatcherProps.Connected },
-    };
-
-    private string? _batteryProp;
 
     public void Start()
     {
         if (_started) return;
         _started = true;
 
+        // ⚠️ 电量属性（AepBattery_Level）不是合法的 watcher 属性键——实测四个写法全抛
+        // "Property key syntax error"（2026-11-21），系统根本没把它开放给 DeviceWatcher。
+        // watcher 只订 Name + IsConnected；电量走 AEP 嵌套属性查询 + GATT 直读兜底（见下）。
         var selector = BluetoothLEDevice.GetDeviceSelector();
-        DeviceWatcher? watcher = null;
-        foreach (var props in BatteryPropCandidates)
+        DeviceWatcher? watcher;
+        try
         {
-            try
-            {
-                watcher = DeviceInformation.CreateWatcher(selector, props, DeviceInformationKind.AssociationEndpoint);
-                if (props.Length == 3) _batteryProp = props[1];
-                Log.Info($"BLE watcher 属性集可用: {string.Join(", ", props)}");
-                break;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"BLE watcher 属性集不可用 [{string.Join(", ", props)}]: {ex.Message}");
-                watcher = null;
-            }
+            watcher = DeviceInformation.CreateWatcher(
+                selector, new[] { WatcherProps.Name, WatcherProps.Connected }, DeviceInformationKind.AssociationEndpoint);
         }
-        if (watcher == null)
+        catch (Exception ex)
         {
-            Log.Error("BLE DeviceWatcher 无法创建，BLE 监控不可用");
+            Log.Error($"BLE DeviceWatcher 创建失败，BLE 监控不可用: {ex.Message}");
             return;
         }
 
@@ -85,8 +72,6 @@ public sealed class BleBatteryWatcher : IDisposable
         // （真机 2026-10-08：戴尔 WK717 已连接却被后续 Updated 误判离线，与经典蓝牙同坑）
         bool? connected = WatcherProps.ReadConnected(props);
 
-        int? percent = WatcherProps.ReadBattery(props, _batteryProp);
-
         if (connected == false)
         {
             if (_devices.TryGetValue(id, out var tracked) && tracked.IsOnline)
@@ -99,9 +84,9 @@ public sealed class BleBatteryWatcher : IDisposable
             return;
         }
 
-        // 未跟踪过、且本次既无电量也未明确在线 → 邻居设备，忽略
+        // 未跟踪过、且未明确在线 → 邻居设备，忽略
         bool known = _devices.ContainsKey(id);
-        if (!known && percent == null && connected != true)
+        if (!known && connected != true)
             return;
 
         var status = _devices.GetOrAdd(id, _ => new DeviceStatus
@@ -126,24 +111,52 @@ public sealed class BleBatteryWatcher : IDisposable
         status.IsOnline = true;
         status.LastUpdated = DateTimeOffset.Now;
 
-        if (percent.HasValue)
-        {
-            bool batteryChanged = status.BatteryPercent != percent;
-            status.BatteryPercent = percent;
-            if (wasOffline || batteryChanged || !known)
-                DeviceUpdated?.Invoke(status);
-            return;
-        }
-
         if (wasOffline || !known)
             DeviceUpdated?.Invoke(status);
 
-        // 系统没给电量：主动 GATT 读一次（限流 2 分钟）
+        // watcher 属性集里没有电量（见 Start 注释）：先查 AEP 缓存电量（快、零连接、节流 5 分钟），
+        // 拿不到再 GATT 直读一次（限流 2 分钟）
+        _ = ResolveBatteryFromAepAsync(id, status);
         if (!_lastGattAttempt.TryGetValue(id, out var last) ||
             DateTimeOffset.Now - last > TimeSpan.FromMinutes(2))
         {
             _lastGattAttempt[id] = DateTimeOffset.Now;
             _ = ReadBatteryViaGattAsync(id, status);
+        }
+    }
+
+    /// <summary>读 AEP 嵌套属性 <c>System.Devices.AepBattery_Level</c>（系统缓存的电量，零连接开销）。
+    /// 该键只是 DeviceInformation 的嵌套属性，不是合法的 watcher 属性键（塞进 CreateWatcher 直接抛
+    /// Property key syntax error），只能按单设备嵌套属性查询——与 <see cref="ResolveKindFromCategoryAsync"/>
+    /// 同一套模式。查询结果由节流字典压频（5 分钟/台），失败静默，交给 GATT 兜底。</summary>
+    private async Task ResolveBatteryFromAepAsync(string aepId, DeviceStatus status)
+    {
+        if (_lastAepProbe.TryGetValue(aepId, out var last) &&
+            DateTimeOffset.Now - last < TimeSpan.FromMinutes(5))
+            return;
+        _lastAepProbe[aepId] = DateTimeOffset.Now;
+        try
+        {
+            var info = await DeviceInformation.CreateFromIdAsync(
+                aepId, new[] { AepBatteryKey }, DeviceInformationKind.AssociationEndpoint);
+            if (!info.Properties.TryGetValue(AepBatteryKey, out var raw)) return;
+            int percent = Convert.ToInt32(raw);
+            if (percent is not (> 0 and <= 100)) return;
+            // 设备已被移除或句柄换代：丢弃结果，否则会复活幽灵条目
+            if (!_devices.TryGetValue(aepId, out var current) || !ReferenceEquals(current, status)) return;
+
+            bool changed = status.BatteryPercent != percent;
+            status.BatteryPercent = percent;
+            status.LastUpdated = DateTimeOffset.Now;
+            if (changed)
+            {
+                Log.Info($"BLE 电量(AEP 缓存): {status.DisplayName} → {percent}%");
+                DeviceUpdated?.Invoke(status);
+            }
+        }
+        catch
+        {
+            // 设备不支持该属性 / 已移除：静默
         }
     }
 
