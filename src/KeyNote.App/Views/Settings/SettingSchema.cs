@@ -1,5 +1,3 @@
-using KeyNote.App.Services;
-
 namespace KeyNote.App.Views;
 
 /// 设置项声明表:字段种类 + 元数据(扩字段只加一行)。
@@ -65,11 +63,6 @@ public sealed partial class SettingsPage
                 Options: ["永久", "7 天", "180 天", "365 天", "730 天"], Advanced: true),
             new FieldSpec(FieldKind.Path, "backup_dir", "备份目录", "备份 .db 文件的目标目录,空 = 使用数据目录下的 backups/。", Advanced: true),
             new FieldSpec(FieldKind.Action, "vacuum_now", "立即 VACUUM", "重建数据库回收空间。", ActionKey: "vacuum", Advanced: true),
-        }, false),
-        ("关于", new[]
-        {
-            new FieldSpec(FieldKind.Info, "app_version", "当前版本", "程序与安装包版本信息。", Value: $"v{UpdateService.CurrentVersionText}"),
-            new FieldSpec(FieldKind.Action, "check_update", "检查更新", "查询 GitHub Releases 是否有新版本;发现新版后可下载安装。", ActionKey: "update"),
         }, false),
     };
 

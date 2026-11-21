@@ -232,6 +232,15 @@ public sealed partial class MainWindow : Window
     /// 切到指定页(托盘⚙入口用)
     public void NavigateTo(string tag)
     {
+        if (tag == "about")
+        {
+            Nav.SelectedItem = null;
+            if (ContentFrame.CurrentSourcePageType != typeof(Views.AboutPage))
+            {
+                ContentFrame.Navigate(typeof(Views.AboutPage));
+            }
+            return;
+        }
         foreach (var item in Nav.MenuItems)
         {
             if (item is NavigationViewItem nvi && nvi.Tag is string t && t == tag)
@@ -287,9 +296,6 @@ public sealed partial class MainWindow : Window
                 _pulsing = false;
             }
 
-            // 侧栏底部按钮:记录中 → 暂停;已暂停 → 继续;未启动 → 启动
-            PauseText.Text = !running ? "启动监听" : recording ? "暂停记录" : "继续记录";
-            PauseIcon.Glyph = running && recording ? "\uE769" : "\uE768";
         }
         catch (Exception ex)
         {
@@ -321,9 +327,9 @@ public sealed partial class MainWindow : Window
         return _statusPulse;
     }
 
-    private void PauseButton_Click(object sender, RoutedEventArgs e)
+    private void AboutButton_Click(object sender, RoutedEventArgs e)
     {
-        App.Instance.TogglePause();
+        NavigateTo("about");
     }
 
     public void RunBackup()

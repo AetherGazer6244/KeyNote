@@ -24,8 +24,6 @@ public sealed partial class SettingsPage : Page
     private readonly List<bool> _colOpen = [];
     private readonly List<bool> _colUserState = [];
     private AppSettings _cfg = null!;
-    private Border? _updateRow;
-    private TextBlock? _updateText;
 
     /// 一行设置项(含其后的分隔线与所属分组卡),用于搜索过滤时整体隐藏。
     private sealed record RowEntry(FrameworkElement Row, FrameworkElement? Separator, FrameworkElement Group);
@@ -33,12 +31,7 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
-        Loaded += (_, _) =>
-        {
-            UpdateService.Completed += OnUpdateCompleted;
-            Build();
-        };
-        Unloaded += (_, _) => UpdateService.Completed -= OnUpdateCompleted;
+        Loaded += (_, _) => Build();
         SearchBox.TextChanged += (_, _) => ApplyFilter();
     }
 
@@ -56,8 +49,6 @@ public sealed partial class SettingsPage : Page
         _collapsible.Clear();
         _colOpen.Clear();
         _colUserState.Clear();
-        _updateRow = null;
-        _updateText = null;
 
         foreach (var (groupName, fields, collapsible) in Groups)
         {
@@ -152,18 +143,6 @@ public sealed partial class SettingsPage : Page
                 AppendRows(stack, normal, trailingSeparator: false, group: card);
             }
 
-            // 关于组:追加「发现新版」提示行(默认隐藏,检查到新版才显示)
-            if (groupName == "关于")
-            {
-                stack.Children.Add(new Border
-                {
-                    Height = 1,
-                    Background = new SolidColorBrush(Theme.UiColors.Divider),
-                    Margin = new Thickness(14, 0, 14, 0),
-                });
-                stack.Children.Add(BuildUpdateRow());
-            }
-
             card.Child = stack;
             GroupsHost.Children.Add(card);
         }
@@ -243,7 +222,6 @@ public sealed partial class SettingsPage : Page
             GroupsHost.Children.Add(advCard);
         }
 
-        if (UpdateService.LastResult is { } last) ApplyUpdateResult(last);
         UpdatePluginCount();
     }
 

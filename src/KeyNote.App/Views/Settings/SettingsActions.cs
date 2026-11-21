@@ -5,57 +5,9 @@ using Microsoft.UI.Xaml.Media;
 
 namespace KeyNote.App.Views;
 
-/// 设置页动作:更新检查结果落地 + 备份/VACUUM/CSV 分发。
+/// 设置页动作:备份/VACUUM/CSV 分发。
 public sealed partial class SettingsPage
 {
-    private Border BuildUpdateRow()
-    {
-        var text = new TextBlock
-        {
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Theme.UiColors.Warning),
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        var open = new Button { Content = "打开下载页" };
-        open.Click += (_, _) =>
-        {
-            if (UpdateService.LastResult is not { } info) return;
-            StatusText.Text = UpdateService.OpenReleasePage(info.ReleaseUrl) ? "已打开下载页" : "打开浏览器失败";
-        };
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-        panel.Children.Add(text);
-        panel.Children.Add(open);
-
-        _updateText = text;
-        _updateRow = new Border
-        {
-            Padding = new Thickness(14, 10, 14, 10),
-            Visibility = Visibility.Collapsed,
-            Child = panel,
-        };
-        return _updateRow;
-    }
-
-    /// 检查结果落地:状态栏文案 + 新版提示行显隐。
-    private void ApplyUpdateResult(UpdateService.UpdateInfo info)
-    {
-        StatusText.Text = info.Message;
-        if (_updateText is not null && info.HasUpdate && info.Latest is not null)
-        {
-            _updateText.Text = $"发现新版本 v{info.Latest.ToString(3)},点右侧「检查更新」可下载安装";
-        }
-        if (_updateRow is not null)
-        {
-            _updateRow.Visibility = info.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
-        }
-    }
-
-    /// 检查完成回调(后台线程触发 → 切回 UI 线程)。
-    private void OnUpdateCompleted(UpdateService.UpdateInfo info)
-    {
-        DispatcherQueue.TryEnqueue(() => ApplyUpdateResult(info));
-    }
-
     private async void RunAction(string action)
     {
         try
@@ -77,23 +29,6 @@ public sealed partial class SettingsPage
                     foreach (var (key, toggle) in _switchControls)
                         toggle.IsOn = false;
                     ShowStatus($"已全关 {_switchControls.Count} 个探测插件,记得点「保存设置」", ok: true);
-                    break;
-                }
-                case "update":
-                {
-                    StatusText.Text = "正在检查更新…";
-                    var info = await UpdateService.CheckAsync();
-                    ApplyUpdateResult(info);
-                    if (!info.HasUpdate) break;
-                    // 发现新版:弹确认框(下载安装 / 稍后)
-                    if (Content is FrameworkElement root && root.XamlRoot is not null)
-                    {
-                        var accepted = await UpdatePrompt.ShowAsync(info, root.XamlRoot, "取消");
-                        if (accepted)
-                        {
-                            await UpdateServiceApp.InstallAsync(info, root.XamlRoot);
-                        }
-                    }
                     break;
                 }
             }

@@ -87,15 +87,15 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
             <NavigationView.PaneFooter>
-                <!-- 侧栏底部:暂停/继续 + 版本号(状态由 UpdateStatus 统一同步) -->
+                <!-- 侧栏底部:「关于」入口 + 版本号(暂停/恢复记录只在托盘菜单) -->
                 <StackPanel Margin="12,0,12,14" Spacing="6">
-                    <Button x:Name="PauseButton" Click="PauseButton_Click"
+                    <Button x:Name="AboutButton" Click="AboutButton_Click"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                             Padding="10,6" CornerRadius="4"
                             Background="Transparent" BorderThickness="0">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon x:Name="PauseIcon" Glyph="&#xE769;" FontSize="14" />
-                            <TextBlock x:Name="PauseText" Text="暂停记录" FontSize="13" VerticalAlignment="Center" />
+                            <FontIcon Glyph="&#xE946;" FontSize="14" />
+                            <TextBlock Text="关于" FontSize="13" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                     <TextBlock x:Name="VersionText" FontSize="11"

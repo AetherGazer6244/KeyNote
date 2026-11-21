@@ -1,0 +1,101 @@
+<Page
+    x:Class="KeyNote.App.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:KeyNote.App.Controls">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- 页头 -->
+        <controls:PageHeader x:Name="Header" Grid.Row="0" Margin="20,16,20,0"
+                             Title="关于" Subtitle="KeyNote · 桌面观测台" />
+
+        <!-- 内容 -->
+        <ScrollViewer Grid.Row="1" Padding="20,10,20,20" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="14">
+
+                <!-- 应用卡:标识 + 版本 + 检查更新 -->
+                <Border Style="{StaticResource AppCardStyle}" Padding="16">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
+                                    Background="{StaticResource AppAccentBrush}">
+                                <TextBlock Text="K" FontSize="22" FontWeight="SemiBold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="KeyNote" Style="{StaticResource AppPageTitleStyle}" />
+                                <TextBlock x:Name="VersionText" Style="{StaticResource CardFootnoteStyle}" />
+                            </StackPanel>
+                            <Button x:Name="CheckUpdateButton" Grid.Column="2" VerticalAlignment="Center"
+                                    Style="{StaticResource AccentButtonStyle}" Click="CheckUpdate_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                                    <TextBlock Text="检查更新" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="键鼠 / 设备电量 / AI 额度三域一体的 Windows 单机桌面观测台。" />
+
+                        <!-- 检查结果 / 发现新版提示行(默认隐藏) -->
+                        <TextBlock x:Name="UpdateStatusText" Style="{StaticResource SettingsDescStyle}"
+                                   TextWrapping="Wrap" Visibility="Collapsed" />
+                        <StackPanel x:Name="UpdateFoundRow" Orientation="Horizontal" Spacing="10"
+                                    Visibility="Collapsed">
+                            <TextBlock x:Name="UpdateFoundText" Style="{StaticResource SettingsDescStyle}"
+                                       TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button x:Name="OpenReleaseButton" Content="打开下载页" Click="OpenRelease_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 项目简介 -->
+                <Border Style="{StaticResource AppCardStyle}" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="项目简介" Style="{StaticResource SettingsGroupTitleStyle}" />
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="KeyNote 是一款 Windows 单机桌面观测台,WinUI3 原生实现(.NET 8 + Windows App SDK,非打包),紧凑 800×600 窗口、Win11 Mica 材质、永久暗色 Fluent 主题,无需管理员权限安装。" />
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="三大观测域一体:键鼠使用统计(Win32 低级钩子 + SQLite 聚合)、无线设备电量(BLE / 2.4G / 蓝经典 / 23 品牌硬件插件)、AI API 额度(8 类 provider 轮询与告警)。数据完全本地,只记录按键名与时间戳,不碰窗口名 / 剪贴板 / 输入内容。" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 功能一览 -->
+                <Border Style="{StaticResource AppCardStyle}" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="功能一览" Style="{StaticResource SettingsGroupTitleStyle}" />
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="• 键鼠统计:统计页 KPI + 趋势图、7×24 活跃热力图、QWERTY 键位热力图、年度热力图、Top 10 按键排行&#x000A;• 设备电量:设备列表 + 24h 曲线、23 品牌硬件插件、桌面悬浮小组件、任务栏电量贴片、低电托盘提醒&#x000A;• AI 额度:provider 卡片(进度条 / 重置倒计时 / 行内刷新)、Acrylic 悬浮小组件、全局快捷键、阈值告警&#x000A;• 通用:系统托盘、应用内检查更新与静默安装、自动备份 / VACUUM / CSV 导出" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 仓库与许可 -->
+                <Border Style="{StaticResource AppCardStyle}" Padding="16">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="仓库与许可" Style="{StaticResource SettingsGroupTitleStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="GitHub 仓库" Click="OpenRepo_Click" />
+                            <Button Content="Releases 更新页" Click="OpenReleasePage_Click" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="本项目基于 MIT 许可开源(声明见仓库 README)。你可以自由使用、修改与分发,软件按「现状」提供,不附任何担保。" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 关于作者 -->
+                <Border Style="{StaticResource AppCardStyle}" Padding="16">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="关于作者" Style="{StaticResource SettingsGroupTitleStyle}" />
+                        <TextBlock Style="{StaticResource SettingsDescStyle}" TextWrapping="Wrap"
+                                   Text="作者 LoneStar(GitHub:AetherGazer6244)。日常在 C# / C++ / Python / Rust / TypeScript 之间来回折腾,做过明日方舟 MAA 自定义版、剪贴板增强、astrbot 插件套件等小项目。KeyNote 是其中自己用得最多的那个。" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="作者 GitHub 主页" Click="OpenAuthor_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
