@@ -5,7 +5,7 @@ namespace KeyNote.App.Views;
 /// 设置项声明表:字段种类 + 元数据(扩字段只加一行)。
 public sealed partial class SettingsPage
 {
-    private enum FieldKind { Switch, Slider, Combo, Number, Path, Action, Info, Hotkey }
+    private enum FieldKind { Switch, Slider, Combo, Number, Path, Action, Info, Hotkey, SubHeader }
 
     private sealed record FieldSpec(
         FieldKind Kind,
@@ -77,15 +77,59 @@ public sealed partial class SettingsPage
 
     // ──── 设备插件开关组(三合一整合) ────
     /// 插件开关从 DeviceSettings 默认表生成,默认值全盘继承 vigil(会写帧的协议一律默认关)。
+    /// 1.4.0:按品类(键盘/鼠标/键鼠通用/手柄/耳机)分组排序,组间插小标题,组头带「一键全关」。
     private static FieldSpec[] DevicePluginFields()
     {
         var s = Core.Devices.Settings.AppSettings.Load();
-        return s.PluginEnabled
-            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
-            .Select(kv => new FieldSpec(FieldKind.Switch, $"device_plugin_{kv.Key}",
-                PluginTitle(kv.Key), PluginDesc(kv.Key)))
-            .ToArray();
+
+        var result = new List<FieldSpec>
+        {
+            new(FieldKind.Action, "device_plugin_disable_all", "一键全关探测插件",
+                "关闭下方全部品牌电量探测(点「保存设置」后生效);要用某品牌再单独打开。",
+                ActionKey: "plugin_disable_all"),
+        };
+
+        var current = "";
+        foreach (var (kv, cat) in s.PluginEnabled
+                     .Select(kv => (Kv: kv, Cat: PluginCategory(kv.Key)))
+                     .OrderBy(t => CategoryOrder(t.Cat))
+                     .ThenBy(t => t.Kv.Key, StringComparer.Ordinal))
+        {
+            if (cat != current)
+            {
+                current = cat;
+                var n = s.PluginEnabled.Count(p => PluginCategory(p.Key) == cat);
+                result.Add(new FieldSpec(FieldKind.SubHeader, $"device_plugin_cat_{cat}",
+                    $"{cat} · {n} 个品牌", "插件 电量探测"));
+            }
+            result.Add(new FieldSpec(FieldKind.Switch, $"device_plugin_{kv.Key}",
+                PluginTitle(kv.Key), PluginDesc(kv.Key)));
+        }
+        return result.ToArray();
     }
+
+    /// 品类按主营产品归类;键鼠通吃品牌(Logitech/Rapoo/Razer/Mchose/Eweadn)单列「键鼠通用」。
+    private static string PluginCategory(string name) => name switch
+    {
+        // 纯键盘:AK870 / Hero68 / 机械轴 / ML903
+        "Ajazz" or "Aula" or "Cherry" or "Ganss" or "Thunderobot" => "键盘",
+        // 纯鼠标 dongle:ATK/VXE / 影极 / M900 Pro / 英菲克 / X2 V2
+        "Atk" or "Darkrim" or "Delux" or "Inphic" or "Pulsar" => "鼠标",
+        "Eweadn" or "Logitech" or "Mchose" or "Rapoo" or "Razer" => "键鼠通用",
+        "Betop" or "DualSense" or "GameSir" => "手柄",
+        "Akg" or "Hecate" or "HecateWireless" or "HyperX" or "SonyInzone" => "耳机",
+        _ => "其他",
+    };
+
+    private static int CategoryOrder(string cat) => cat switch
+    {
+        "键盘" => 0,
+        "鼠标" => 1,
+        "键鼠通用" => 2,
+        "手柄" => 3,
+        "耳机" => 4,
+        _ => 9,
+    };
 
     private static string PluginTitle(string name) => name switch
     {

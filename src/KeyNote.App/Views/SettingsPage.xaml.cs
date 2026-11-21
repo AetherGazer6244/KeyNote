@@ -13,6 +13,8 @@ public sealed partial class SettingsPage : Page
 {
 
     private readonly Dictionary<string, object> _editors = [];
+    /// 插件开关控件登记(key → 控件):一键全关与底栏「N/M 已启用」计数都要直接操作开关本身。
+    private readonly Dictionary<string, Microsoft.UI.Xaml.Controls.ToggleSwitch> _switchControls = [];
     private readonly List<RowEntry> _rows = [];
     private readonly List<(StackPanel Host, TextBlock Chevron)> _advSections = [];
     private readonly List<bool> _advOpen = [];
@@ -42,6 +44,7 @@ public sealed partial class SettingsPage : Page
         Header.ShowRefresh = false;
         GroupsHost.Children.Clear();
         _editors.Clear();
+        _switchControls.Clear();
         _rows.Clear();
         _advSections.Clear();
         _advOpen.Clear();
@@ -184,6 +187,7 @@ public sealed partial class SettingsPage : Page
         }
 
         if (UpdateService.LastResult is { } last) ApplyUpdateResult(last);
+        UpdatePluginCount();
     }
 
     /// 高级区展开/折叠状态 → chevron 方向 + host 可见性
@@ -220,6 +224,9 @@ public sealed partial class SettingsPage : Page
 
     private FrameworkElement BuildRow(FieldSpec spec)
     {
+        // 品类小标题(设备插件组内):整行纯文本,无控件
+        if (spec.Kind == FieldKind.SubHeader) return BuildSubHeader(spec);
+
         var grid = new Grid
         {
             Padding = new Thickness(14, 10, 14, 10),
@@ -261,6 +268,31 @@ public sealed partial class SettingsPage : Page
 
         grid.Tag = spec.Title + " " + spec.Desc;
         return grid;
+    }
+
+    /// <summary>插件组内的品类小标题(如「键盘 · 5 个品牌」),视觉弱化、无编辑器。
+    /// Tag 带品类与关键词,搜索时随普通行一起过滤。</summary>
+    private FrameworkElement BuildSubHeader(FieldSpec spec)
+    {
+        var grid = new Grid { Padding = new Thickness(14, 10, 14, 4) };
+        grid.Children.Add(new TextBlock
+        {
+            Text = spec.Title,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
+        });
+        grid.Tag = spec.Title + " " + spec.Desc;
+        return grid;
+    }
+
+    // ──── 设备插件底栏计数 ────
+    /// <summary>底栏「N/M 已启用」:设备插件开关的实时计数。</summary>
+    private void UpdatePluginCount()
+    {
+        var pluginSwitches = _switchControls.Where(kv => kv.Key.StartsWith("device_plugin_")).ToList();
+        PluginCountHost.Visibility = pluginSwitches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PluginCountText.Text = $"{pluginSwitches.Count(kv => kv.Value.IsOn)}/{pluginSwitches.Count} 已启用";
     }
 
     private void ApplyFilter()

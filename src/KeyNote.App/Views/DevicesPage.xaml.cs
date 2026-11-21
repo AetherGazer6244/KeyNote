@@ -661,7 +661,14 @@ public sealed partial class DevicesPage : Page
         return (output.ToString(), filteredStart, Math.Max(0, filteredEnd - filteredStart));
     }
 
-    private async void Refresh_Click(object sender, RoutedEventArgs e)
+    private void Refresh_Click(object sender, RoutedEventArgs e)
+        => RunSafe(DoRefreshAsync);
+
+    /// <summary>空态「立即扫描」与页头「刷新」同一条路径。</summary>
+    private void EmptyScan_Click(object sender, RoutedEventArgs e)
+        => RunSafe(DoRefreshAsync);
+
+    private async Task DoRefreshAsync()
     {
         if (_refreshing) return;
 

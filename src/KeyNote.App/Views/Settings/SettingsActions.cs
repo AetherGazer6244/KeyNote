@@ -71,6 +71,14 @@ public sealed partial class SettingsPage
                 case "csv":
                     StatusText.Text = MaintenanceService.ExportCsv(30);
                     break;
+                case "plugin_disable_all":
+                {
+                    // 只翻控件:每台 Toggled 回调会把 _editors 一并置 false,点「保存设置」才落盘
+                    foreach (var (key, toggle) in _switchControls)
+                        toggle.IsOn = false;
+                    ShowStatus($"已全关 {_switchControls.Count} 个探测插件,记得点「保存设置」", ok: true);
+                    break;
+                }
                 case "update":
                 {
                     StatusText.Text = "正在检查更新…";

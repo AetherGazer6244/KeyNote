@@ -78,6 +78,13 @@
             <TextBlock x:Name="EmptyHint" Text="连接蓝牙设备或插入 2.4G 接收器，然后点击刷新" FontSize="12"
                        HorizontalAlignment="Center"
                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            <Button x:Name="EmptyScanButton" Click="EmptyScan_Click" Margin="0,10,0,0"
+                    HorizontalAlignment="Center" Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                    <TextBlock Text="立即扫描" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <!-- 不在列表里的设备只能从这里恢复：忽略与永久移除是两套名单，各给一个入口；都为 0 时整行隐藏 -->

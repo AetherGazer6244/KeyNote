@@ -98,6 +98,12 @@ public sealed partial class SettingsPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toggle, spec.Title);
         toggle.Toggled += (_, _) => _editors[spec.Key] = toggle.IsOn;
         _editors[spec.Key] = toggle.IsOn;
+        // 插件开关登记:一键全关与底栏「N/M 已启用」直接操作/读取控件本身
+        if (spec.Key.StartsWith("device_plugin_"))
+        {
+            _switchControls[spec.Key] = toggle;
+            toggle.Toggled += (_, _) => UpdatePluginCount();
+        }
         return toggle;
     }
 
