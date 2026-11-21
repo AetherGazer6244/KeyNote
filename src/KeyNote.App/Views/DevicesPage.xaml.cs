@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using KeyNote.Core.Devices.Settings;
 using Microsoft.UI.Xaml.Navigation;
 using KeyNote.App.Services;
+using KeyNote.Core.Storage;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using System.Collections.ObjectModel;
@@ -390,8 +391,15 @@ public sealed partial class DevicesPage : Page
         var device = App.Services.Manager.Find(id);
         if (device == null || device.Source == DeviceSource.System || device.IsOnline) return;
 
-        // 条数要写进确认框：只说"无法恢复"用户没概念，写出多少条才知道代价
+        // 条数要写进确认框：只说"无法恢复"用户没概念，写出多少条才知道代价。
+        // Task 续体不会自动回 UI 线程（同 Refresh_Click），取完数必须显式编组回去再建对话框
         var summary = await Task.Run(() => App.Services.History.GetDeviceSummary(id));
+        DispatcherQueue.TryEnqueue(() => _ = ConfirmDeleteDeviceAsync(device, summary));
+    }
+
+    private async Task ConfirmDeleteDeviceAsync(DeviceStatus device, DeviceHistorySummary summary)
+    {
+        string id = device.Id;
         string historyLine = summary.Count == 0
             ? "该设备没有历史记录。"
             : $"将同时删除 {summary.Count:N0} 条历史记录（{summary.First:MM-dd} ~ {summary.Last:MM-dd}），无法恢复。";
@@ -474,7 +482,8 @@ public sealed partial class DevicesPage : Page
             await ShowMessageAsync("历史未删净", $"设备已从列表移除，但历史删除失败：{ex.Message}");
         }
 
-        Refresh();
+        // Task 续体不会自动回 UI 线程（同 Refresh_Click），列表重建显式编组
+        DispatcherQueue.TryEnqueue(Refresh);
     }
 
     private void IgnoreDevice_Click(object sender, RoutedEventArgs e)
@@ -663,9 +672,14 @@ public sealed partial class DevicesPage : Page
             if (elapsed < minVisible)
                 await Task.Delay(minVisible - elapsed);
 
-            Refresh();
-            SetRefreshing(false);
-            _refreshing = false;
+            // WinUI3 的 UI 线程没有 SynchronizationContext：Task 续体不会自动回 UI 线程，
+            // 收尾必须显式编组，否则在后台线程碰控件直接 0x8001010E（async void 未捕获 → 进程终止）
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                Refresh();
+                SetRefreshing(false);
+                _refreshing = false;
+            });
         }
     }
 
