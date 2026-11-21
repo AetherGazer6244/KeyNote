@@ -72,9 +72,14 @@ public sealed class InputHookService : IDisposable
         _msThread = new Thread(MsLoop) { IsBackground = true, Name = "hook-ms" };
         _msThread.SetApartmentState(ApartmentState.STA);
         _msThread.Start();
+        AppLog.Info("hooks", "钩子线程已安装(键盘 + 鼠标)");
     }
 
-    public void Pause() => _recording = false;
+    public void Pause()
+    {
+        _recording = false;
+        AppLog.Info("hooks", "记录暂停");
+    }
 
     /// 恢复记录:钩子尚未安装时直接装上(设置页开关即时生效,无需重启)。
     public void Resume()
@@ -85,6 +90,7 @@ public sealed class InputHookService : IDisposable
             return;
         }
         _recording = true;
+        AppLog.Info("hooks", "记录恢复");
     }
 
     public void PauseMouse() => _mouseRecording = false;
@@ -95,6 +101,7 @@ public sealed class InputHookService : IDisposable
         _started = false;
         StopThread(_kbThreadId, ref _kbHook);
         StopThread(_msThreadId, ref _msHook);
+        AppLog.Info("hooks", "钩子卸载");
     }
 
     private void StopThread(uint threadId, ref nint hook)

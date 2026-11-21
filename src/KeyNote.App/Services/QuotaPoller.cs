@@ -2,6 +2,7 @@ using Microsoft.UI.Dispatching;
 using KeyNote.Core.Quota.Config;
 using KeyNote.Core.Quota.Poll;
 using KeyNote.Core.Quota.Providers;
+using KeyNote.Core.Utils;
 
 namespace KeyNote.App.Services;
 
@@ -97,6 +98,11 @@ public sealed class QuotaPoller : IDisposable
             // 自适应退避的计数:整轮没有一行拉通才算一次失败
             _errorRounds = results.Count > 0 && results.All(r => r.Level == Levels.Error)
                 ? _errorRounds + 1 : 0;
+            var failed = results.Where(r => r.Level == Levels.Error).ToList();
+            if (failed.Count > 0)
+            {
+                AppLog.Warn("quota", $"轮询完成,{failed.Count} 行失败:{string.Join("; ", failed.Select(f => $"{f.Name}: {f.Error}"))}");
+            }
             _dq.TryEnqueue(() => _app.SetResults(results));
             return results;
         }

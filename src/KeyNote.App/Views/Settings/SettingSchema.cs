@@ -17,6 +17,7 @@ public sealed partial class SettingsPage
         int[]? Values = null,
         string? ActionKey = null,
         bool Advanced = false,
+        bool SwitchDefault = false,
         string? Value = null);
 
     private static readonly (string Name, FieldSpec[] Fields, bool Collapsible)[] Groups =
@@ -28,6 +29,7 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "start_minimized", "启动时最小化", "开机后直接驻留托盘,不弹出主窗口。"),
             new FieldSpec(FieldKind.Switch, "close_to_tray", "关闭窗口到托盘", "点关闭按钮时最小化到托盘而不是退出程序。"),
             new FieldSpec(FieldKind.Switch, "hide_tray_icon", "隐藏托盘图标", "隐藏后重启仍保持隐藏;打开主窗口,回到本页关闭此项即可恢复显示。", Advanced: true),
+            new FieldSpec(FieldKind.Switch, "app_log_enabled", "运行日志", "把启动 / 钩子 / 额度 / 更新等关键事件与错误按天记录到数据目录 logs/,便于排查问题;关闭后仅崩溃记录保留。", SwitchDefault: true),
         }, false),
         ("界面", new[]
         {
@@ -63,6 +65,7 @@ public sealed partial class SettingsPage
                 Options: ["永久", "7 天", "180 天", "365 天", "730 天"], Advanced: true),
             new FieldSpec(FieldKind.Path, "backup_dir", "备份目录", "备份 .db 文件的目标目录,空 = 使用数据目录下的 backups/。", Advanced: true),
             new FieldSpec(FieldKind.Action, "vacuum_now", "立即 VACUUM", "重建数据库回收空间。", ActionKey: "vacuum", Advanced: true),
+            new FieldSpec(FieldKind.Action, "open_log_folder", "打开日志文件夹", "在资源管理器中打开运行日志目录(logs/),排查问题后可把日志发给开发者。", ActionKey: "open_logs"),
         }, false),
     };
 

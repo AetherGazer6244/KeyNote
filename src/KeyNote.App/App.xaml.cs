@@ -122,10 +122,13 @@ public partial class App : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         Settings = AppSettings.Load();
+        AppLog.Init(Settings);
+        AppLog.Info("app", $"启动序列开始 v{UpdateService.CurrentVersionText}{(Program.LastExitDirty ? "(上次未正常退出)" : "")}");
 
         try
         {
             KeyNoteDb.Init(Settings);
+            AppLog.Info("db", "keynote.db 初始化完成");
         }
         catch (Exception ex)
         {
@@ -139,6 +142,7 @@ public partial class App : Application
         Services = new AppServices();
         Services.ApplyLogSettings();
         Services.Manager.Start();
+        AppLog.Info("devices", "设备域启动(电量监听 + 硬件插件)");
         Services.Manager.LowBatteryDetected += device =>
             Services.NotifyLowBattery?.Invoke($"「{device.DisplayName}」电量低({device.BatteryPercent}%),请及时充电");
 
@@ -148,6 +152,7 @@ public partial class App : Application
         QuotaHotkey.Apply(Quotas.HotkeyText, Quotas.HotkeyEnabled);
         Quotas.Poller.Start();
         _ = Quotas.Poller.RefreshNowAsync();
+        AppLog.Info("quota", "额度轮询启动");
         // 额度设置镜像到 config.json(设置页编辑显示;真源在 quota.json)
         Quotas.MirrorToConfig(Settings);
 
@@ -161,6 +166,7 @@ public partial class App : Application
         Hooks.HookReady += () => window.DispatcherQueue.TryEnqueue(() => window.UpdateStatus(!Hooks.IsPaused, Hooks.IsRunning));
         if (Settings.ListenerEnabled) Hooks.Start();
         if (!Settings.MouseListenerEnabled) Hooks.PauseMouse();
+        AppLog.Info("hooks", $"键鼠钩子{(Settings.ListenerEnabled ? "启动" : "未启用(设置关闭)")}");
         ApplyIdlePause(Settings.GetInt("idle_pause_min", 0));
 
         // 闲置检测定时器
@@ -277,6 +283,7 @@ public partial class App : Application
                 try
                 {
                     var info = await UpdateService.CheckAsync(silent: true);
+                    AppLog.Info("update", $"每日静默检查:{info.Message}");
                     // 仅成功才记每日时间戳:网络失败不该被 24h 静默窗吞掉
                     if (info.Ok) RecordUpdateCheckTime();
                     if (!info.HasUpdate) return;
@@ -307,6 +314,7 @@ public partial class App : Application
                 try
                 {
                     var info = await UpdateService.CheckAsync();
+                    AppLog.Info("update", $"手动检查:{info.Message}");
                     if (info.Ok) RecordUpdateCheckTime();
                     if (!info.HasUpdate)
                     {
@@ -420,6 +428,7 @@ public partial class App : Application
         try { Tray.Stop(); } catch { /* 忽略 */ }
         try { Hooks.Dispose(); } catch { /* 忽略 */ }
         try { WindowService.Current?.Close(); } catch { /* 忽略 */ }
+        AppLog.Info("app", "正常退出");
         CrashLog.Write("app.exit", message: "clean shutdown");
         Exit();
     }

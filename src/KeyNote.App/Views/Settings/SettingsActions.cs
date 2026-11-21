@@ -31,6 +31,14 @@ public sealed partial class SettingsPage
                     ShowStatus($"已全关 {_switchControls.Count} 个探测插件,记得点「保存设置」", ok: true);
                     break;
                 }
+                case "open_logs":
+                {
+                    var dir = System.IO.Path.Combine(Core.Utils.AppPaths.DataDir(), "logs");
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dir) { UseShellExecute = true });
+                    ShowStatus("已打开日志文件夹", ok: true);
+                    break;
+                }
             }
         }
         catch (Exception ex)

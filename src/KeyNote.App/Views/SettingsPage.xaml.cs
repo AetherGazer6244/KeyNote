@@ -508,6 +508,7 @@ public sealed partial class SettingsPage : Page
             cfg.Set("start_minimized", false);
             cfg.Set("close_to_tray", true);
             cfg.Set("remember_window_pos", true);
+            cfg.Set("app_log_enabled", true);
             cfg.Set("settings_plugin_group_expanded", false);
             cfg.Set("db_retention_days", 365);
             cfg.Set("backup_dir", "");

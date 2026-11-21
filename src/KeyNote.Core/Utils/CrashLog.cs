@@ -26,6 +26,9 @@ public static class CrashLog
 
     public static void Write(string prefix, Exception? ex = null, string? message = null)
     {
+        // 异常同步进运行日志时间线(带前后事件流便于排查);启停标记是正常事件按 Info
+        if (prefix is "app.start" or "app.exit") AppLog.Info(prefix, message ?? "—");
+        else AppLog.Error(prefix, message ?? "异常", ex);
         try
         {
             lock (Gate)

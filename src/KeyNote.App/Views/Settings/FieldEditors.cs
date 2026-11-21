@@ -91,7 +91,7 @@ public sealed partial class SettingsPage
     {
         var toggle = new ToggleSwitch
         {
-            IsOn = _cfg.GetBool(spec.Key),
+            IsOn = _cfg.GetBool(spec.Key, spec.SwitchDefault),
             OnContent = "",
             OffContent = "",
         };
