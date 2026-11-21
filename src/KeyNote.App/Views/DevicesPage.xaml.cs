@@ -144,9 +144,22 @@ public sealed partial class DevicesPage : Page
             : "连接蓝牙设备或插入 2.4G 接收器，然后点击刷新";
     }
 
-    private async void CustomizeDevice_Click(object sender, RoutedEventArgs e)
+    /// <summary>async void 事件处理器统一兜底：Application.UnhandledException 拦不住 async void 里逸出的异常，
+    /// 一旦漏出进程直接终止（2026-11-21 实机 0x8001010E 崩溃，日志空白只能靠 Windows 事件日志反查），所以全部就地捕获落盘。</summary>
+    private async void RunSafe(Func<Task> body)
+    {
+        try { await body(); }
+        catch (Exception ex) { Log.Error("设备页操作失败", ex); }
+    }
+
+    private void CustomizeDevice_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuFlyoutItem item || item.Tag is not string id) return;
+        RunSafe(() => CustomizeDeviceCoreAsync(id));
+    }
+
+    private async Task CustomizeDeviceCoreAsync(string id)
+    {
         var device = App.Services.Manager.Find(id);
         if (device == null || device.Source == DeviceSource.System) return;
 
@@ -394,7 +407,7 @@ public sealed partial class DevicesPage : Page
         // 条数要写进确认框：只说"无法恢复"用户没概念，写出多少条才知道代价。
         // Task 续体不会自动回 UI 线程（同 Refresh_Click），取完数必须显式编组回去再建对话框
         var summary = await Task.Run(() => App.Services.History.GetDeviceSummary(id));
-        DispatcherQueue.TryEnqueue(() => _ = ConfirmDeleteDeviceAsync(device, summary));
+        DispatcherQueue.TryEnqueue(() => RunSafe(() => ConfirmDeleteDeviceAsync(device, summary)));
     }
 
     private async Task ConfirmDeleteDeviceAsync(DeviceStatus device, DeviceHistorySummary summary)
@@ -498,25 +511,25 @@ public sealed partial class DevicesPage : Page
         Refresh();
     }
 
-    private async void ManageBlocked_Click(object sender, RoutedEventArgs e)
-        => await ShowManagedDialogAsync(
+    private void ManageBlocked_Click(object sender, RoutedEventArgs e)
+        => RunSafe(() => ShowManagedDialogAsync(
             "已屏蔽的设备",
             "没有已屏蔽的设备。",
             () => App.Services.Manager.BlockedDevices
                 .Select(kv => (kv.Id, kv.Info.Name, kv.Info.BlockedAt, "屏蔽于")).ToList(),
             "解除",
             App.Services.Manager.UnblockDevice,
-            "解除失败：设置写入失败，未解除屏蔽。");
+            "解除失败：设置写入失败，未解除屏蔽。"));
 
-    private async void ManageIgnored_Click(object sender, RoutedEventArgs e)
-        => await ShowManagedDialogAsync(
+    private void ManageIgnored_Click(object sender, RoutedEventArgs e)
+        => RunSafe(() => ShowManagedDialogAsync(
             "已忽略的设备",
             "没有已忽略的设备。",
             () => App.Services.Manager.IgnoredDevices
                 .Select(kv => (kv.Id, kv.Info.Name, kv.Info.IgnoredAt, "忽略于")).ToList(),
             "恢复",
             App.Services.Manager.UnignoreDevice,
-            "恢复失败：设置写入失败，未恢复该设备。");
+            "恢复失败：设置写入失败，未恢复该设备。"));
 
     /// <summary>「已忽略 / 已屏蔽」共用一套列表：两份名单只差标题、时间前缀和动作，抄两份早晚会改漏一边。</summary>
     private async Task ShowManagedDialogAsync(

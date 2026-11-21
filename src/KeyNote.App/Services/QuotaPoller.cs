@@ -37,11 +37,11 @@ public sealed class QuotaPoller : IDisposable
         _loop = Task.Run(() => LoopAsync(_cts.Token));
     }
 
-    public async void Reschedule()
+    /// <summary>重建轮询循环让新周期生效。Stop/Start 均为同步操作，保持同步方法——
+    /// async void 的异常 Application.UnhandledException 拦不住，能不写成 async void 就不写。</summary>
+    public void Reschedule()
     {
-        // 重建循环让新周期生效
         Stop();
-        await Task.CompletedTask;
         Start();
     }
 

@@ -1,4 +1,5 @@
 using KeyNote.Core.Utils;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -62,6 +63,10 @@ public static class UpdatePrompt
     {
         if (root is null) return false;
 
+        // 进度回调从下载线程（ConfigureAwait(false) 链）上被调，控件必须显式编组回 UI 线程，
+        // 否则后台碰控件 0x8001010E —— async void 链路里未捕获会直接带走进程
+        var dq = DispatcherQueue.GetForCurrentThread();
+
         var statusText = new TextBlock
         {
             Text = "正在准备下载…",
@@ -98,13 +103,16 @@ public static class UpdatePrompt
         {
             await download((percent, read, total) =>
             {
-                bar.IsIndeterminate = false;
-                bar.Value = Math.Clamp(percent, 0, 100);
-                var text = total > 0
-                    ? $"正在下载 {read / 1024.0 / 1024.0:F1} / {total / 1024.0 / 1024.0:F1} MB({percent}%)"
-                    : $"正在下载 {read / 1024.0 / 1024.0:F1} MB";
-                statusText.Text = text;
-                status(text);
+                dq?.TryEnqueue(() =>
+                {
+                    bar.IsIndeterminate = false;
+                    bar.Value = Math.Clamp(percent, 0, 100);
+                    var text = total > 0
+                        ? $"正在下载 {read / 1024.0 / 1024.0:F1} / {total / 1024.0 / 1024.0:F1} MB({percent}%)"
+                        : $"正在下载 {read / 1024.0 / 1024.0:F1} MB";
+                    statusText.Text = text;
+                    status(text);
+                });
             }).ConfigureAwait(true);
         }
         catch (Exception ex)

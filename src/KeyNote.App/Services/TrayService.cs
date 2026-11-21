@@ -305,6 +305,8 @@ public sealed class TrayService : IDisposable
     /// 委托需保持强引用,否则可能被 GC 回收导致钩子回调失效
     private static WndProcDelegate? _wndProcKeepAlive;
 
+    private const uint WmEndSession = 0x0016;
+
     private nint WndProc(nint hWnd, uint msg, nint wParam, nint lParam)
     {
         // 托盘回调是 SendMessage 直达窗口过程,不走消息队列
@@ -325,6 +327,11 @@ public sealed class TrayService : IDisposable
             // explorer 重启后按期望态决定是否重新挂图标(此前无条件 AddIcon,会破坏「隐藏托盘图标」)
             if (_desiredVisible) AddIcon();
             return IntPtr.Zero;
+        }
+        if (msg == WmEndSession && wParam != 0)
+        {
+            // 系统关机/注销走不到 Quit()，这里补干净退出标记，避免下次启动误报「上次异常退出」
+            CrashLog.Write("app.exit", message: "session ending");
         }
         return TrayNative.DefWindowProcW(hWnd, msg, wParam, lParam);
     }

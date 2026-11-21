@@ -203,6 +203,17 @@ public partial class App : Application
         Services.ExitApplication = Quit;
         Services.NotifyLowBattery = text => Tray.UiMarshal?.Invoke(() => Tray.Notify(text));
 
+        // 上次异常退出：延迟几秒让托盘就绪，气泡提示一次（首次运行无此标记）
+        if (Program.LastExitDirty)
+        {
+            _ = System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(6)).ContinueWith(_ =>
+                window.DispatcherQueue.TryEnqueue(() =>
+                {
+                    try { Tray.Notify("上次未正常退出（可能崩溃或被强制结束），已自动恢复记录。"); }
+                    catch { /* 气泡失败忽略 */ }
+                }));
+        }
+
         // 更新检查:启动后每日静默一次
         StartDailyUpdateCheck(window);
 
@@ -405,6 +416,7 @@ public partial class App : Application
         try { Tray.Stop(); } catch { /* 忽略 */ }
         try { Hooks.Dispose(); } catch { /* 忽略 */ }
         try { WindowService.Current?.Close(); } catch { /* 忽略 */ }
+        CrashLog.Write("app.exit", message: "clean shutdown");
         Exit();
     }
 
