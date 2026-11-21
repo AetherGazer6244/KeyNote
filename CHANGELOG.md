@@ -2,6 +2,29 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.4.0] - 2026-11-21
+
+稳健性 + 全局线程模型根治 + 蓝牙电量修复 + 界面体验打磨。
+
+### 修复
+
+- **电量监视器属性键修复**:BLE / 经典蓝牙 DeviceWatcher 不再携带非法属性键 `System.Devices.AepBattery_Level`(实测四种写法全部抛 "Property key syntax error",此前 `_batteryProp` 恒为 null 属死代码);BLE 电量改为 AEP 嵌套属性按台查询(`CreateFromIdAsync`,5 分钟节流)+ GATT 0x180F/0x2A19 直读兜底,经典蓝牙维持 HFP 网关设备节点通道
+- **每日更新检查静默降级**:`UpdateService.CheckAsync(silent: true)` 用于每日静默检查,网络不可达不再每次启动刷 crash.log(手动检查仍落盘)
+- **API 错误文案人话化**:新增 `ApiErrorText.Humanize` 映射(智谱 Coding Plan 未开通 / Key 无效 / 余额不足 / 限流 / 超时等),智谱、MiniMax、SiliconFlow 三处透传点接入;匹配不到显示原文(80 字截断)
+
+### 改进
+
+- **全局 SynchronizationContext 根治**:新增 `Helpers/UiSynchronizationContext`(Post→DispatcherQueue.TryEnqueue、Send→阻塞转发、CreateCopy→自身),App 构造时安装到 UI 线程——所有 `await` 续体自动回 UI 线程,`0x8001010E` 同类隐患从根上消除;显式 `TryEnqueue` 编组保留作双保险
+- **async void 全面兜底**:更新下载进度回调经 `DispatcherQueue.TryEnqueue` 编组回 UI 线程(应用内更新下载必崩点);设备页 3 处 async 事件处理器收敛到 `RunSafe` 统一捕获落盘;额度轮询 `Reschedule` 改回同步方法(`Application.UnhandledException` 拦不住 async void 逸出的异常)
+- **上次异常退出提示**:crash.log 干净退出标记(`app.exit`) + 启动检测,异常退出后下次启动经托盘气泡提示一次;系统关机/注销在托盘窗口过程补写标记避免误报
+
+### 界面
+
+- 设置页「设备插件」23 个品牌按品类分组(键盘 / 鼠标 / 键鼠通用 / 手柄 / 耳机,小标题含品牌数),组头新增「一键全关探测插件」
+- 设置页固定底栏新增「N/M 已启用」插件计数胶囊(开关拨动实时刷新)
+- 设备页空态新增「立即扫描」按钮(与页头刷新同一路径)
+- 设置搜索命中插件名与品类小标题(搜索框输「罗技」「插件」均可定位)
+
 ## [1.3.1] - 2026-11-21
 
 ### 修复
