@@ -480,13 +480,12 @@ public sealed partial class SettingsPage : Page
                 dev.ApplyWidgetState();
             }
 
-            // 额度域立即生效(三合一整合):镜像键 → quota.json + 轮询/小组件/快捷键热更
+            // 额度域立即生效(三合一整合):镜像键 → quota.json + 轮询/小组件热更
             var quotas = App.Quotas;
-            if (quotas is not null)
-            {
-                quotas.ApplyFromConfig(cfg);
-                App.Instance.QuotaHotkey?.Apply(quotas.HotkeyText, quotas.HotkeyEnabled);
-            }
+            if (quotas is not null) quotas.ApplyFromConfig(cfg);
+
+            // 全局快捷键立即生效(唤起/收起主窗口)
+            App.Instance.Hotkey?.Apply(cfg.AppHotkey, cfg.AppHotkeyEnabled);
 
             ShowStatus("已保存", ok: true);
         }
@@ -518,8 +517,8 @@ public sealed partial class SettingsPage : Page
             cfg.Set("quota_refresh_interval", 30);
             cfg.Set("quota_adaptive_poll", false);
             cfg.Set("quota_widget_enabled", false);
-            cfg.Set("quota_hotkey_enabled", true);
-            cfg.Set("quota_hotkey", KeyNote.Core.Quota.Hotkeys.HotkeySpec.DefaultText);
+            cfg.Set("app_hotkey_enabled", true);
+            cfg.Set("app_hotkey", KeyNote.Core.Quota.Hotkeys.HotkeySpec.DefaultText);
             cfg.Save();
 
             // 恢复默认必须同步运行时状态,否则旧值继续生效
@@ -530,8 +529,8 @@ public sealed partial class SettingsPage : Page
             if (quotas is not null)
             {
                 quotas.ApplyFromConfig(cfg);
-                App.Instance.QuotaHotkey?.Apply(quotas.HotkeyText, quotas.HotkeyEnabled);
             }
+            App.Instance.Hotkey?.Apply(cfg.AppHotkey, cfg.AppHotkeyEnabled);
             if (WindowService.Current is MainWindow mw)
             {
                 mw.UpdateStatus(!App.Instance.Hooks.IsPaused, App.Instance.Hooks.IsRunning);

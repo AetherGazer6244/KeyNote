@@ -28,6 +28,8 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "silent_start", "静默启动", "完全静默启动,无窗口、无托盘通知(适合后台常驻)。"),
             new FieldSpec(FieldKind.Switch, "start_minimized", "启动时最小化", "开机后直接驻留托盘,不弹出主窗口。"),
             new FieldSpec(FieldKind.Switch, "close_to_tray", "关闭窗口到托盘", "点关闭按钮时最小化到托盘而不是退出程序。"),
+            new FieldSpec(FieldKind.Switch, "app_hotkey_enabled", "全局快捷键", "按下快捷键唤起 KeyNote 主窗口,再按一次收起回托盘。"),
+            new FieldSpec(FieldKind.Hotkey, "app_hotkey", "快捷键组合", "点输入框后直接按下组合键录入;也可手打如 Ctrl+Shift+A,空 = 不设组合。"),
             new FieldSpec(FieldKind.Switch, "hide_tray_icon", "隐藏托盘图标", "隐藏后重启仍保持隐藏;打开主窗口,回到本页关闭此项即可恢复显示。", Advanced: true),
             new FieldSpec(FieldKind.Switch, "app_log_enabled", "运行日志", "把启动 / 钩子 / 额度 / 更新等关键事件与错误按天记录到数据目录 logs/,便于排查问题;关闭后仅崩溃记录保留。", SwitchDefault: true),
         }, false),
@@ -54,8 +56,6 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Number, "quota_refresh_interval", "刷新间隔(秒)", "轮询 provider 配额接口的周期,15~3600 秒。", Lo: 15, Hi: 3600, Step: 5),
             new FieldSpec(FieldKind.Switch, "quota_adaptive_poll", "自适应轮询", "有 critical 行时间隔减半、持续失败指数退避、全正常放缓 ×1.5。"),
             new FieldSpec(FieldKind.Switch, "quota_widget_enabled", "额度悬浮小组件", "在桌面常驻额度行悬浮条(Acrylic 玻璃面,可拖动)。"),
-            new FieldSpec(FieldKind.Switch, "quota_hotkey_enabled", "全局快捷键", "启用后按组合键随时唤起/收起额度小组件。"),
-            new FieldSpec(FieldKind.Hotkey, "quota_hotkey", "快捷键组合", "点输入框后直接按下组合键录入;也可手打如 Ctrl+Shift+A,空 = 不设组合。"),
         }, false),
         ("数据", new[]
         {

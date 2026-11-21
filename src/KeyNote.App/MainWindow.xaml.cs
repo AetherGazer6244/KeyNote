@@ -251,17 +251,45 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// 唤起主窗口(托盘点击)
+    /// 唤起主窗口(托盘点击 / 快捷键);最小化状态下 Show 不恢复,须显式 Restore
     public void ShowMainWindow()
     {
         try
         {
             AppWindow.Show();
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p &&
+                p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
+                p.Restore();
             Activate();
         }
         catch (Exception ex)
         {
             Core.Utils.CrashLog.Write("window.show", ex);
+        }
+    }
+
+    /// 全局快捷键 toggle:可见 → 收起回托盘(等同点关闭);隐藏/最小化 → 唤起置前。
+    public void ToggleFromHotkey()
+    {
+        try
+        {
+            var minimized = AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter op &&
+                op.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
+            if (AppWindow.IsVisible && !minimized)
+            {
+                SaveWindowPosition();
+                AppWindow.Hide();
+                Core.Utils.AppLog.Info("hotkey", "快捷键收起主窗口");
+            }
+            else
+            {
+                ShowMainWindow();
+                Core.Utils.AppLog.Info("hotkey", "快捷键唤起主窗口");
+            }
+        }
+        catch (Exception ex)
+        {
+            Core.Utils.CrashLog.Write("hotkey.toggle", ex);
         }
     }
 

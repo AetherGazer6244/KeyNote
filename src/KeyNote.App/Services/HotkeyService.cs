@@ -43,7 +43,7 @@ public enum HotkeyState
 ///
 /// 组合文本由 Core 的 HotkeySpec 解析(Core 不引 Win32,修饰键/键码同 Win32 值)。
 /// </summary>
-public sealed class QuotaHotkeyService : IDisposable
+public sealed class HotkeyService : IDisposable
 {
     private const uint WM_HOTKEY = 0x0312;
     private const uint WM_APP_APPLY = 0x8001;
@@ -108,7 +108,7 @@ public sealed class QuotaHotkeyService : IDisposable
     [DllImport("user32.dll")]
     private static extern nint SetWindowLongPtrW(nint hWnd, int idx, nint value);
 
-    private static readonly string ClassName = "AgentEyeHotkey_" + Guid.NewGuid().ToString("N")[..8];
+    private static readonly string ClassName = "KeyNoteHotkey_" + Guid.NewGuid().ToString("N")[..8];
 
     private readonly Action _onTriggered;
     private readonly WndProcDelegate _proc;   // 防止委托被 GC
@@ -138,7 +138,7 @@ public sealed class QuotaHotkeyService : IDisposable
 
     private volatile HotkeyState _state = HotkeyState.Unknown;
 
-    public QuotaHotkeyService(Action onTriggered)
+    public HotkeyService(Action onTriggered)
     {
         _onTriggered = onTriggered;
         _proc = WndProc;
@@ -172,7 +172,7 @@ public sealed class QuotaHotkeyService : IDisposable
                 hCursor = LoadCursorW(nint.Zero, 32512),
             };
             RegisterClassExW(ref cls);
-            _hwndValue = CreateWindowExW(0, ClassName, "AgentEyeHotkey",
+            _hwndValue = CreateWindowExW(0, ClassName, "KeyNoteHotkey",
                 0, 0, 0, 0, 0, nint.Zero, nint.Zero, hInst, nint.Zero);
             if (_hwndValue == nint.Zero) return;
             // 隐藏且不抢焦点(纯消息窗口:注册热键只要它收 WM_HOTKEY)
@@ -260,7 +260,8 @@ public sealed class QuotaHotkeyService : IDisposable
     private string DoApply(string text, bool enabled)
     {
         Unregister();
-        if (!enabled)
+        // 空组合 = 用户不设快捷键,按关闭处理(设置页「空 = 不设组合」语义,别报成 Invalid)
+        if (!enabled || text.Length == 0)
         {
             _state = HotkeyState.Disabled;
             return L.T("hotkey.stOff");

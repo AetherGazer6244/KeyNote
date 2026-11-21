@@ -22,11 +22,11 @@ public partial class App : Application
     /// 设备域组合根(三合一整合):设备页/贴片/小组件/托盘低电提醒统一经此取服务
     public static AppServices Services { get; private set; } = null!;
 
-    /// 额度域组合根(三合一整合):轮询/告警/小组件/全局快捷键统一经此取服务
+    /// 额度域组合根(三合一整合):轮询/告警/小组件统一经此取服务
     public static QuotaService Quotas { get; private set; } = null!;
 
-    /// 额度全局快捷键(唤醒/收起额度小组件;配置在 quota.json ui.hotkey)
-    public QuotaHotkeyService? QuotaHotkey { get; private set; }
+    /// 全局快捷键(唤起/收起主窗口;组合存 config.json app_hotkey)
+    public HotkeyService? Hotkey { get; private set; }
 
     private bool _quitting;
     private int _idlePauseMin;
@@ -125,6 +125,17 @@ public partial class App : Application
         AppLog.Init(Settings);
         AppLog.Info("app", $"启动序列开始 v{UpdateService.CurrentVersionText}{(Program.LastExitDirty ? "(上次未正常退出)" : "")}");
 
+        // 旧快捷键迁移(1.6.1):quota_hotkey(1.5.x 镜像自 quota.json)→ app_hotkey;
+        // 磁盘上有旧键才搬,空值也搬(用户主动清除),marker 保证只跑一次
+        if (Settings.HasKey("quota_hotkey") && !Settings.GetBool("app_hotkey_migrated"))
+        {
+            Settings.Set("app_hotkey", Settings.GetString("quota_hotkey"));
+            Settings.Set("app_hotkey_enabled", Settings.GetBool("quota_hotkey_enabled", true));
+            Settings.Set("app_hotkey_migrated", true);
+            Settings.Save();
+            AppLog.Info("config", $"旧快捷键配置已迁移 → {Settings.AppHotkey}(enabled={Settings.AppHotkeyEnabled})");
+        }
+
         try
         {
             KeyNoteDb.Init(Settings);
@@ -148,8 +159,6 @@ public partial class App : Application
 
         // 额度域启动(三合一整合):quota.json + DPAPI;告警 toast 失败降级托盘气泡
         Quotas = new QuotaService();
-        QuotaHotkey = new QuotaHotkeyService(() => Quotas.ToggleWidget());
-        QuotaHotkey.Apply(Quotas.HotkeyText, Quotas.HotkeyEnabled);
         Quotas.Poller.Start();
         _ = Quotas.Poller.RefreshNowAsync();
         AppLog.Info("quota", "额度轮询启动");
@@ -212,6 +221,12 @@ public partial class App : Application
         Services.ShowMainWindow = () => window.ShowMainWindow();
         Services.ExitApplication = Quit;
         Services.NotifyLowBattery = text => Tray.UiMarshal?.Invoke(() => Tray.Notify(text));
+
+        // 全局快捷键:唤起/收起主窗口(1.6.1 起取代额度小组件入口;
+        // WM_HOTKEY 在服务自己的线程触发,必须编组回 UI 线程才能动窗口)
+        Hotkey = new HotkeyService(() => window.DispatcherQueue.TryEnqueue(window.ToggleFromHotkey));
+        Hotkey.Apply(Settings.AppHotkey, Settings.AppHotkeyEnabled);
+        AppLog.Info("hotkey", $"快捷键注册:{Hotkey.Status}");
 
         // 上次异常退出：延迟几秒让托盘就绪，气泡提示一次（首次运行无此标记）
         if (Program.LastExitDirty)
@@ -423,7 +438,7 @@ public partial class App : Application
         try { Services?.Dispose(); } catch { /* 退出兜底 */ }
         try { Quotas?.ShutdownWidget(); } catch { /* 退出兜底 */ }
         try { Quotas?.Poller.Dispose(); } catch { /* 退出兜底 */ }
-        try { QuotaHotkey?.Dispose(); } catch { /* 退出兜底 */ }
+        try { Hotkey?.Dispose(); } catch { /* 退出兜底 */ }
         try { KeyNoteDb.Close(); } catch (Exception ex) { CrashLog.Write("db.close", ex); }
         try { Tray.Stop(); } catch { /* 忽略 */ }
         try { Hooks.Dispose(); } catch { /* 忽略 */ }

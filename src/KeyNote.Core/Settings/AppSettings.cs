@@ -32,6 +32,8 @@ public sealed class AppSettings
         ["data_dir"] = "",
         ["mouse_listener_enabled"] = true,
         ["backup_dir"] = "",
+        ["app_hotkey_enabled"] = true,
+        ["app_hotkey"] = KeyNote.Core.Quota.Hotkeys.HotkeySpec.DefaultText,
     };
 
     public static string ConfigPath => Path.Combine(AppPaths.DataDir(), "config.json");
@@ -176,6 +178,9 @@ public sealed class AppSettings
         return def;
     }
 
+    /// 键是否存在于当前配置(含 Defaults 注入;判断磁盘旧键时,该键不能进 Defaults)。
+    public bool HasKey(string key) { lock (Gate) { return _data.ContainsKey(key); } }
+
     public void Set(string key, bool value) { lock (Gate) { _data[key] = JsonValue.Create(value); } }
     public void Set(string key, int value) { lock (Gate) { _data[key] = JsonValue.Create(value); } }
     public void Set(string key, double value) { lock (Gate) { _data[key] = JsonValue.Create(value); } }
@@ -192,4 +197,6 @@ public sealed class AppSettings
     public bool StartMinimized => GetBool("start_minimized", false);
     public bool HideTrayIcon => GetBool("hide_tray_icon", false);
     public bool AutoStart => GetBool("auto_start", false);
+    public string AppHotkey => GetString("app_hotkey", KeyNote.Core.Quota.Hotkeys.HotkeySpec.DefaultText);
+    public bool AppHotkeyEnabled => GetBool("app_hotkey_enabled", true);
 }

@@ -1,6 +1,5 @@
 using KeyNote.Core.Quota.Cache;
 using KeyNote.Core.Quota.Config;
-using KeyNote.Core.Quota.Hotkeys;
 using KeyNote.Core.Quota.Providers;
 
 namespace KeyNote.App.Services;
@@ -112,45 +111,7 @@ public sealed class QuotaService
         Http.ResetProxyState(); // 别让旧的「代理疑似不可用」记忆污染新模式
     }
 
-    /// <summary>
-    /// 全局快捷键组合文本(ui.hotkey)。
-    /// 键不存在 → 默认 Ctrl+Shift+A;键存在但为空 → 用户主动"清除"(热键停用)。
-    /// </summary>
-    public string HotkeyText
-    {
-        get
-        {
-            var ui = UiDict();
-            if (!ui.TryGetValue("hotkey", out var h)) return HotkeySpec.DefaultText;
-            return h is string hs ? hs.Trim() : HotkeySpec.DefaultText;
-        }
-    }
-
-    /// <summary>全局快捷键开关(ui.hotkey_enabled);缺省开启。</summary>
-    public bool HotkeyEnabled
-    {
-        get
-        {
-            var ui = UiDict();
-            if (ui.TryGetValue("hotkey_enabled", out var e) && e is bool b) return b;
-            return true;
-        }
-    }
-
-    /// <summary>组合是否可用:开关打开 + 文本非空 + 能解析。</summary>
-    public bool HotkeyUsable =>
-        HotkeyEnabled &&
-        HotkeyText.Length > 0 &&
-        HotkeySpec.TryParse(HotkeyText, out _, out _);
-
-    public void SetHotkey(string text, bool enabled)
-    {
-        var ui = UiDict();
-        ui["hotkey"] = text;
-        ui["hotkey_enabled"] = enabled;
-    }
-
-    // ──── 桌面小组件(ui.widget;托盘/快捷键开关与启动恢复共用) ────
+    // ──── 桌面小组件(ui.widget;托盘开关与启动恢复共用) ────
     private KeyNote.App.Widgets.QuotaWidget.WidgetWindow? _widget;
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dq =
         Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
@@ -311,8 +272,6 @@ public sealed class QuotaService
         cfg.Set("quota_refresh_interval", Cfg.TryGetValue("refresh_interval_sec", out var r) && r is not null ? Convert.ToInt32(r) : 30);
         cfg.Set("quota_adaptive_poll", AdaptivePoll);
         cfg.Set("quota_widget_enabled", WidgetEnabled);
-        cfg.Set("quota_hotkey_enabled", HotkeyEnabled);
-        cfg.Set("quota_hotkey", HotkeyText);
     }
 
     /// 设置页保存后:把 config.json 镜像键应用回 quota 域(落盘 + 轮询/小组件热更)。
@@ -325,7 +284,6 @@ public sealed class QuotaService
         Cfg["refresh_interval_sec"] = (int)Math.Clamp(cfg.GetInt("quota_refresh_interval", 30), 15, 3600);
         SetAdaptivePoll(cfg.GetBool("quota_adaptive_poll"));
         SetWidgetEnabled(cfg.GetBool("quota_widget_enabled"));
-        SetHotkey(cfg.GetString("quota_hotkey").Trim(), cfg.GetBool("quota_hotkey_enabled"));
         TrySaveCfg();
         Poller.Reschedule();
         _dq.TryEnqueue(ApplyWidgetState);
