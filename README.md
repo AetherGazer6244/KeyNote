@@ -26,7 +26,7 @@
   - 8 类 provider 轮询(DeepSeek / 智谱 / MiniMax / OpenCode Go / SiliconFlow / OpenRouter / 通用 OpenAI 兼容 / 中转站),API Key DPAPI 加密存储
   - 额度页:provider 卡片(等级色点 + 进度条 + 重置倒计时 + 行内刷新)+ 右键暂停/编辑/删除 + 手风琴详情
   - 内置 provider 管理面板(URL / Key / Model 表单,自动识别类型、测试连通、拉取模型列表)
-  - 桌面悬浮小组件(Acrylic 玻璃面)+ 全局快捷键唤起 + 跨阈值告警(60 分钟冷却 / 免打扰时段 / 恢复通知)
+  - 桌面悬浮小组件(Acrylic 玻璃面)+ 跨阈值告警(60 分钟冷却 / 免打扰时段 / 恢复通知)
   - 配置独立 `quota.json`(AgentEye 原格式,兼容 Python 版合并语义),缓存独立 `quota-cache/`
 - **首启自动导入**(旧应用迁移,幂等标记不重复导入)
   - VigilWatt:`%LOCALAPPDATA%\VigilWatt\history.db` 电量历史 → keynote.db v7(旧目录只读不动)
@@ -38,6 +38,7 @@
   - 数据库迁移 v1~v7,启动自动升级,与历史 Python 版库完全兼容(v7 起为纯增量:设备电量样本表)
 - **系统托盘**(`TrayService`,纯 Win32):显示窗口 / 暂停监听 / 实时统计 / 最近活动 / 数据管理 / 🔋 设备电量 / 🤖 AI 额度 / 设置 / 检查更新 / 退出;图标按 accent 色 30% tint 渲染
   - Win11 可能默认把图标收进溢出区(`^`):右键任务栏 → 任务栏设置 → 其他系统托盘图标 → 打开 KeyNote,即可常显在任务栏
+- **全局快捷键**(`HotkeyService`,Win32 RegisterHotKey):按下唤起 KeyNote 主窗口(最小化时自动恢复),再按一次收起回托盘;设置页「启动与常规」可改组合或关闭
 - **应用内更新检查**(`UpdateService`)
   - 关于页「检查更新」+ 托盘「🔄 检查更新」;启动后每日静默检查一次(24h 判重)
   - 比对 GitHub Releases 最新稳定版与当前程序集版本(组件式比较,同版本不误报;预发布/草稿版自动排除)

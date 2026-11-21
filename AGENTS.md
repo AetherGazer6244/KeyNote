@@ -113,7 +113,7 @@
 | `src/KeyNote.App/Services/QuotaPoller.cs` | 额度轮询引擎(PeriodicTimer 后台循环 + 单飞 + 行级单刷 + 自适应间隔)|
 | `src/KeyNote.App/Services/QuotaNotifier.cs` | 告警评估与通知(跨阈值/冷却/免打扰/恢复;toast→托盘气泡→beep 三级降级)|
 | `src/KeyNote.App/Services/QuotaRes.cs` | 额度域画刷解析(Ae*Brush 键 → UiColors 语义色映射)|
-| `src/KeyNote.App/Services/QuotaHotkeyService.cs` | 全局快捷键(Win32 RegisterHotKey 隐藏消息窗,唤起/收起额度小组件)|
+| `src/KeyNote.App/Services/HotkeyService.cs` | 全局快捷键(Win32 RegisterHotKey 隐藏消息窗,唤起/收起主窗口)|
 | `src/KeyNote.App/Widgets/DeviceWidget/` + `Widgets/QuotaWidget/` | 桌面悬浮小组件(设备电量角标 / Acrylic 额度条)|
 | `src/KeyNote.App/Services/Taskbar/` | 任务栏电量贴片(vigil 六件套,namespace 仍为 KeyNote.App.Services)|
 

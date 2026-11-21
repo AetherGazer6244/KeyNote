@@ -2,6 +2,17 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.6.1] - 2026-11-21
+
+全局快捷键行为变更。
+
+### 变更
+
+- **全局快捷键改为唤起/收起主窗口**:按下组合键唤起 KeyNote 主窗口(最小化时自动恢复),再按一次收起回托盘;此前唤起的是额度悬浮小组件,该入口移除(小组件仍可从托盘「🤖 AI 额度」子菜单和设置页开关打开)
+  - 服务正名:`QuotaHotkeyService` → `HotkeyService`(注册/状态机/失败文案不变),窗口类名 AgentEyeHotkey_* → KeyNoteHotkey_*
+  - 配置搬家:真源从 quota.json `ui.hotkey` 迁至 config.json `app_hotkey` / `app_hotkey_enabled`;旧键启动时一次性自动迁移(自定义组合不丢,空值视为主动清除;quota.json 旧值保留不删)
+  - 设置页「全局快捷键 / 快捷键组合」两项从「AI 额度」组移到「启动与常规」组;空组合按停用处理,不再报「组合无效」
+
 ## [1.6.0] - 2026-11-21
 
 运行日志:事件时间线,方便排查问题。
