@@ -9,7 +9,7 @@
 - 技术栈锁定:`net8.0-windows10.0.19041.0` + Windows App SDK 1.7(`WindowsPackageType=None` 非打包 + `WindowsAppSDKSelfContained=true`)
 - 双工程:`src/KeyNote.App`(WinUI 壳 + 页面 + 控件)与 `src/KeyNote.Core`(无 UI:设置 / 存储 / 钩子 / 工具)
 - 主窗口硬编码 800×600(按 DPI 缩放),不响应式
-- 布局:48px 通栏标题栏(状态胶囊)+ NavigationView 左侧导航(7 页)+ 内容区,切换走 `App._switch_page` 等价的 `MainWindow.NavigateTo(tag)`
+- 布局:48px 通栏标题栏(状态胶囊)+ NavigationView 左侧导航(7 页)+ 底部「关于」入口 + 内容区,切换走 `App._switch_page` 等价的 `MainWindow.NavigateTo(tag)`(`about` 为虚拟 tag,不在导航项中)
 - 7 页侧边栏导航(Segoe 字形图标 + NavigationView 默认选中态,分「键鼠 / 设备 / 额度」三组 header)
   - Page 1 `StatsPage`(`Views/StatsPage`):页头 + 时间筛选(SelectorBar)+ 3 张 KPI 卡(随筛选口径)+ 趋势图(悬停十字线)
   - Page 2 `KeyboardPage`(`Views/KeyboardPage`):7×24 活跃度热力图 + QWERTY 键盘热力图
@@ -17,7 +17,8 @@
   - Page 4 `TopKeysPage`(`Views/TopKeysPage`):Top 10 按键条形图(合并大小写口径)
   - Page 5 `DevicesPage`(`Views/DevicesPage`):设备电量列表(电量条 + 来源徽标)+ KPI 卡 + 单设备 24h 趋势(展开行)
   - Page 6 `QuotaPage`(`Views/QuotaPage`):AI 额度 provider 卡片(等级色点 + 进度条 + 重置倒计时 + 行内刷新)
-  - Page 7 `SettingsPage`(`Views/SettingsPage`):声明式字段表(分组/搜索/固定底栏)
+  - Page 7 `SettingsPage`(`Views/SettingsPage`):声明式字段表(分组/搜索/固定底栏/设备插件分组可折叠)
+- 关于页 `AboutPage`(`Views/AboutPage`):应用卡(版本 + 检查更新)+ 项目简介 + 功能一览 + 仓库与许可 + 关于作者;经侧边栏底部「ⓘ 关于」按钮或 `NavigateTo("about")` 进入,导航栏无对应项(侧边栏暂停按钮已移除,暂停/恢复只走托盘菜单)
 - 页面骨架统一:页头固定行(不随内容滚走)+ 内容滚动行;数据页统一 `Views/PageRefresh.Wire` 接线
 - auto-refresh 只刷新当前页(设置页不实现 `IRefreshable`,自然跳过)
 - ⚙ 入口(托盘菜单)统一走 `MainWindow.NavigateTo("settings")`
@@ -82,7 +83,7 @@
 |---|---|
 | `src/KeyNote.App/MainWindow.xaml(.cs)` | 主窗口(标题栏 + 侧边栏 7 页三组 + Mica + 自动刷新 + 关闭到托盘)|
 | `src/KeyNote.App/App.xaml(.cs)` | 应用根:设置加载 → DB 初始化 → 钩子 → 托盘 → 窗口显隐策略 + 全局异常落盘 |
-| `src/KeyNote.App/Views/*.xaml(.cs)` | 7 个页面(Stats/Keyboard/Heatmap/TopKeys/Devices/Quota/Settings)+ `IRefreshable`;`Views/Quota/ProviderManagerPane`(provider 管理面板)|
+| `src/KeyNote.App/Views/*.xaml(.cs)` | 7 个导航页(Stats/Keyboard/Heatmap/TopKeys/Devices/Quota/Settings)+ `AboutPage` 关于页 + `IRefreshable`;`Views/Quota/ProviderManagerPane`(provider 管理面板)|
 | `src/KeyNote.App/Views/PageRefresh.cs` | 页面刷新接线助手(页头刷新 + 首次加载 + 异常落盘)|
 | `src/KeyNote.App/Controls/*.xaml(.cs)` | KpiCard / PageHeader / TrendChartControl / GhHeatmapControl / HourlyGridControl / KeyboardHeatmapControl / BarChartControl / ChartTip / EmptyStateView |
 | `src/KeyNote.App/Theme/UiColors.cs` | 暗色语义色板(唯一色板真源)|

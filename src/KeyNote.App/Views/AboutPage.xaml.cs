@@ -19,6 +19,7 @@ public sealed partial class AboutPage : Page
     public AboutPage()
     {
         InitializeComponent();
+        Header.ShowRefresh = false;
         VersionText.Text = $"v{UpdateService.CurrentVersionText}";
         UpdateFoundText.Foreground = new SolidColorBrush(Theme.UiColors.Warning);
 

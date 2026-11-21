@@ -92,7 +92,9 @@ public sealed partial class SettingsPage : Page
 
             if (collapsible)
             {
-                // 可折叠组(设备插件):组头 = 按钮(竖条+标题+「N/M 已启用」+chevron),行装进可隐藏的 host
+                // 可折叠组(设备插件):组头 = 按钮(竖条+标题左,「N/M 已启用」+chevron 右),行装进可隐藏的 host
+                titleRow.ColumnDefinitions[1] = new ColumnDefinition { Width = GridLength.Auto };
+                titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 var countText = new TextBlock
                 {
                     FontSize = 11,
@@ -110,8 +112,8 @@ public sealed partial class SettingsPage : Page
                 };
                 titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                Grid.SetColumn(countText, 2);
-                Grid.SetColumn(chevron, 3);
+                Grid.SetColumn(countText, 3);
+                Grid.SetColumn(chevron, 4);
                 titleRow.Children.Add(countText);
                 titleRow.Children.Add(chevron);
 
@@ -120,7 +122,7 @@ public sealed partial class SettingsPage : Page
                 {
                     Content = titleRow,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
                     Padding = new Thickness(0),
                     BorderThickness = new Thickness(0),
