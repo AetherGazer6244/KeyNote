@@ -19,6 +19,10 @@ public sealed partial class SettingsPage : Page
     private readonly List<(StackPanel Host, TextBlock Chevron)> _advSections = [];
     private readonly List<bool> _advOpen = [];
     private readonly List<bool> _advUserState = [];
+    /// 可折叠分组(设备插件):host + chevron + 组头计数文本,开合状态记忆进 config.json
+    private readonly List<(StackPanel Host, TextBlock Chevron, TextBlock Count)> _collapsible = [];
+    private readonly List<bool> _colOpen = [];
+    private readonly List<bool> _colUserState = [];
     private AppSettings _cfg = null!;
     private Border? _updateRow;
     private TextBlock? _updateText;
@@ -49,10 +53,13 @@ public sealed partial class SettingsPage : Page
         _advSections.Clear();
         _advOpen.Clear();
         _advUserState.Clear();
+        _collapsible.Clear();
+        _colOpen.Clear();
+        _colUserState.Clear();
         _updateRow = null;
         _updateText = null;
 
-        foreach (var (groupName, fields) in Groups)
+        foreach (var (groupName, fields, collapsible) in Groups)
         {
             var normal = fields.Where(f => !f.Advanced).ToArray();
             // 整组归入高级区后常规项为空(如「数据」),常规区不出卡
@@ -91,9 +98,59 @@ public sealed partial class SettingsPage : Page
             Grid.SetColumn(title, 1);
             titleRow.Children.Add(bar);
             titleRow.Children.Add(title);
-            stack.Children.Add(titleRow);
 
-            AppendRows(stack, normal, trailingSeparator: false, group: card);
+            if (collapsible)
+            {
+                // 可折叠组(设备插件):组头 = 按钮(竖条+标题+「N/M 已启用」+chevron),行装进可隐藏的 host
+                var countText = new TextBlock
+                {
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0),
+                };
+                var chevron = new TextBlock
+                {
+                    FontFamily = new FontFamily("Segoe Fluent Icons"),
+                    Text = "\uE76C", // ChevronRight(收起态)
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Theme.UiColors.FgMuted),
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                Grid.SetColumn(countText, 2);
+                Grid.SetColumn(chevron, 3);
+                titleRow.Children.Add(countText);
+                titleRow.Children.Add(chevron);
+
+                var bodyHost = new StackPanel();
+                var header = new Button
+                {
+                    Content = titleRow,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                    Padding = new Thickness(0),
+                    BorderThickness = new Thickness(0),
+                };
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(header, $"{groupName}(展开/折叠)");
+                var idx = _collapsible.Count;
+                header.Click += (_, _) => ToggleCollapsibleGroup(idx);
+
+                stack.Children.Add(header);
+                stack.Children.Add(bodyHost);
+                _collapsible.Add((bodyHost, chevron, countText));
+                _colOpen.Add(_cfg.GetBool("settings_plugin_group_expanded"));
+                _colUserState.Add(_colOpen[idx]);
+                ApplyColState(idx);
+                AppendRows(bodyHost, normal, trailingSeparator: false, group: card);
+            }
+            else
+            {
+                stack.Children.Add(titleRow);
+                AppendRows(stack, normal, trailingSeparator: false, group: card);
+            }
 
             // 关于组:追加「发现新版」提示行(默认隐藏,检查到新版才显示)
             if (groupName == "关于")
@@ -199,6 +256,41 @@ public sealed partial class SettingsPage : Page
         chevron.Text = open ? "\uE70D" : "\uE76C"; // ChevronDown / ChevronRight
     }
 
+    // ──── 可折叠分组(设备插件) ────
+    /// 开合状态 → host 可见性 + chevron 方向 + 组头计数
+    private void ApplyColState(int idx)
+    {
+        var (host, chevron, count) = _collapsible[idx];
+        var open = _colOpen[idx];
+        host.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+        chevron.Text = open ? "\uE70D" : "\uE76C"; // ChevronDown / ChevronRight
+        count.Text = PluginEnabledSummary();
+    }
+
+    /// 点击组头:翻转开合并持久化(当前仅插件组一组,键名单数;扩多组时改 per-group key)
+    private void ToggleCollapsibleGroup(int idx)
+    {
+        _colOpen[idx] = !_colOpen[idx];
+        if (idx < _colUserState.Count) _colUserState[idx] = _colOpen[idx];
+        ApplyColState(idx);
+        try
+        {
+            _cfg.Set("settings_plugin_group_expanded", _colOpen[idx]);
+            _cfg.Save();
+        }
+        catch (Exception ex)
+        {
+            Core.Utils.CrashLog.Write("settings.collapse", ex);
+        }
+    }
+
+    /// 「N/M 已启用」摘要文本(设备插件开关实时统计,底栏胶囊与折叠组头共用)。
+    private string PluginEnabledSummary()
+    {
+        var pluginSwitches = _switchControls.Where(kv => kv.Key.StartsWith("device_plugin_")).ToList();
+        return $"{pluginSwitches.Count(kv => kv.Value.IsOn)}/{pluginSwitches.Count} 已启用";
+    }
+
     /// 行 + 1px 分隔符追加;trailingSeparator = 末尾补一条(衔接后续区块)
     private void AppendRows(StackPanel host, FieldSpec[] fields, bool trailingSeparator, FrameworkElement group)
     {
@@ -287,12 +379,16 @@ public sealed partial class SettingsPage : Page
     }
 
     // ──── 设备插件底栏计数 ────
-    /// <summary>底栏「N/M 已启用」:设备插件开关的实时计数。</summary>
+    /// <summary>底栏「N/M 已启用」+ 折叠组头计数:设备插件开关的实时统计。</summary>
     private void UpdatePluginCount()
     {
-        var pluginSwitches = _switchControls.Where(kv => kv.Key.StartsWith("device_plugin_")).ToList();
-        PluginCountHost.Visibility = pluginSwitches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        PluginCountText.Text = $"{pluginSwitches.Count(kv => kv.Value.IsOn)}/{pluginSwitches.Count} 已启用";
+        var summary = PluginEnabledSummary();
+        PluginCountText.Text = summary;
+        PluginCountHost.Visibility = _switchControls.Keys.Any(k => k.StartsWith("device_plugin_"))
+            ? Visibility.Visible : Visibility.Collapsed;
+        // 折叠组头(当前仅设备插件组)同步刷新
+        foreach (var (_, _, count) in _collapsible)
+            count.Text = summary;
     }
 
     private void ApplyFilter()
@@ -300,7 +396,7 @@ public sealed partial class SettingsPage : Page
         var q = SearchBox.Text.Trim();
         var searching = q.Length > 0;
 
-        // 搜索时强制展开所有高级区;清空后恢复用户手动展开状态(此前直接全部折叠)
+        // 搜索时强制展开所有高级区与折叠组;清空后恢复用户手动展开状态(此前直接全部折叠)
         for (var i = 0; i < _advSections.Count; i++)
         {
             if (searching)
@@ -313,6 +409,19 @@ public sealed partial class SettingsPage : Page
                 _advOpen[i] = _advUserState[i];
             }
             ApplyAdvState(i);
+        }
+        for (var i = 0; i < _collapsible.Count; i++)
+        {
+            if (searching)
+            {
+                if (i < _colUserState.Count) _colUserState[i] = _colOpen[i];
+                _colOpen[i] = true;
+            }
+            else if (i < _colUserState.Count)
+            {
+                _colOpen[i] = _colUserState[i];
+            }
+            ApplyColState(i);
         }
 
         // 行 + 分隔线一起隐藏;整组无命中时连分组卡一起隐藏(不留空卡与孤立线条)
@@ -419,6 +528,7 @@ public sealed partial class SettingsPage : Page
             cfg.Set("start_minimized", false);
             cfg.Set("close_to_tray", true);
             cfg.Set("remember_window_pos", true);
+            cfg.Set("settings_plugin_group_expanded", false);
             cfg.Set("db_retention_days", 365);
             cfg.Set("backup_dir", "");
             cfg.Set("quota_alert_enabled", true);

@@ -21,7 +21,7 @@ public sealed partial class SettingsPage
         bool Advanced = false,
         string? Value = null);
 
-    private static readonly (string Name, FieldSpec[] Fields)[] Groups =
+    private static readonly (string Name, FieldSpec[] Fields, bool Collapsible)[] Groups =
     {
         ("启动与常规", new[]
         {
@@ -30,11 +30,11 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "start_minimized", "启动时最小化", "开机后直接驻留托盘,不弹出主窗口。"),
             new FieldSpec(FieldKind.Switch, "close_to_tray", "关闭窗口到托盘", "点关闭按钮时最小化到托盘而不是退出程序。"),
             new FieldSpec(FieldKind.Switch, "hide_tray_icon", "隐藏托盘图标", "隐藏后重启仍保持隐藏;打开主窗口,回到本页关闭此项即可恢复显示。", Advanced: true),
-        }),
+        }, false),
         ("界面", new[]
         {
             new FieldSpec(FieldKind.Switch, "remember_window_pos", "记住窗口位置", "记住主窗口位置,下次启动恢复。"),
-        }),
+        }, false),
         ("设备电量", new[]
         {
             new FieldSpec(FieldKind.Switch, "device_monitor_system_battery", "本机电池监控", "把电脑自带电池也纳入电量列表,无无线设备时也有数据可看。"),
@@ -44,8 +44,8 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Combo, "device_history_retention_days", "电量历史保留", "设备电量原始样本的保留时长,到期自动清理。", Options: ["30 天", "90 天", "180 天", "365 天", "730 天"], Values: [30, 90, 180, 365, 730]),
             new FieldSpec(FieldKind.Switch, "device_widget_enabled", "桌面悬浮小组件", "在桌面显示在线设备的电量角标,可拖动、右键菜单管理。"),
             new FieldSpec(FieldKind.Switch, "device_taskbar_pill_enabled", "任务栏电量贴片", "在任务栏常驻低电设备电量贴片,双击唤起主窗口。"),
-        }),
-        ("设备插件", DevicePluginFields()),
+        }, false),
+        ("设备插件", DevicePluginFields(), true),
         ("AI 额度", new[]
         {
             new FieldSpec(FieldKind.Switch, "quota_alert_enabled", "额度告警", "provider 剩余额度跨过阈值时弹系统通知(同等间隔 60 分钟冷却,一轮合并一条)。"),
@@ -56,7 +56,7 @@ public sealed partial class SettingsPage
             new FieldSpec(FieldKind.Switch, "quota_widget_enabled", "额度悬浮小组件", "在桌面常驻额度行悬浮条(Acrylic 玻璃面,可拖动)。"),
             new FieldSpec(FieldKind.Switch, "quota_hotkey_enabled", "全局快捷键", "启用后按组合键随时唤起/收起额度小组件。"),
             new FieldSpec(FieldKind.Hotkey, "quota_hotkey", "快捷键组合", "点输入框后直接按下组合键录入;也可手打如 Ctrl+Shift+A,空 = 不设组合。"),
-        }),
+        }, false),
         ("数据", new[]
         {
             new FieldSpec(FieldKind.Action, "backup_now", "立即备份", "对当前数据库做一致性快照。", ActionKey: "backup", Advanced: true),
@@ -65,12 +65,12 @@ public sealed partial class SettingsPage
                 Options: ["永久", "7 天", "180 天", "365 天", "730 天"], Advanced: true),
             new FieldSpec(FieldKind.Path, "backup_dir", "备份目录", "备份 .db 文件的目标目录,空 = 使用数据目录下的 backups/。", Advanced: true),
             new FieldSpec(FieldKind.Action, "vacuum_now", "立即 VACUUM", "重建数据库回收空间。", ActionKey: "vacuum", Advanced: true),
-        }),
+        }, false),
         ("关于", new[]
         {
             new FieldSpec(FieldKind.Info, "app_version", "当前版本", "程序与安装包版本信息。", Value: $"v{UpdateService.CurrentVersionText}"),
             new FieldSpec(FieldKind.Action, "check_update", "检查更新", "查询 GitHub Releases 是否有新版本;发现新版后可下载安装。", ActionKey: "update"),
-        }),
+        }, false),
     };
 
     private static readonly int[] RetentionValues = [0, 7, 180, 365, 730];
