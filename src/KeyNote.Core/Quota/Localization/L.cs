@@ -106,6 +106,7 @@ public static class L
         ["kind.opencode_go"] = "OpenCode Go",
         ["kind.siliconflow"] = "SiliconFlow(硅基流动)",
         ["kind.openrouter"] = "OpenRouter",
+        ["kind.yuanxuai"] = "元序",
         ["kind.generic_openai"] = "通用 OpenAI 兼容",
 
         // —— 设置页:高级 ——
@@ -217,6 +218,11 @@ public static class L
         ["startup.errWrite"] = "写入启动项失败:{0}",
         ["form.errEmptyUrl"] = "Base URL 不能为空",
         ["form.errSave"] = "保存失败:{0}",
+        ["det.urlYuanxu"] = "按域名识别为元序",
+        ["yx.keyInvalid"] = "元序 API Key 无效",
+        ["yx.today"] = "今日 {0}{1}",
+        ["yx.total"] = "累计 {0}{1}",
+        ["yx.requests"] = " / {0} 次请求",
 
         // —— 删除确认 ——
         ["delete.title"] = "删除 {0}",

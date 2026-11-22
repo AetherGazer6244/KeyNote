@@ -37,6 +37,7 @@ public sealed class ConfigStore
             ["zhipu"] = "ZHIPU_API_KEY",
             ["siliconflow"] = "SILICONFLOW_API_KEY",
             ["openrouter"] = "OPENROUTER_API_KEY",
+            ["yuanxuai"] = "YUANXUAI_API_KEY",
         };
 
     private static readonly IReadOnlyDictionary<string, string> KindFromV1Key =
@@ -61,6 +62,7 @@ public sealed class ConfigStore
             // 1.6.0 新增
             ["siliconflow"] = "https://api.siliconflow.cn",
             ["openrouter"] = "https://openrouter.ai",
+            ["yuanxuai"] = "https://token.yuanxuai.xyz/v1",
         };
 
     /// <summary>官方端点的默认 base_url(拉取层对空 URL 有 fallback);没有则空串。</summary>

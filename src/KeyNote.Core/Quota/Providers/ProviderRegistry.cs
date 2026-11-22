@@ -31,6 +31,7 @@ public static class ProviderRegistry
             // 1.6.0 新增
             ["siliconflow"] = SiliconFlowProvider.FetchAsync,
             ["openrouter"] = OpenRouterProvider.FetchAsync,
+            ["yuanxuai"] = YuanxuProvider.FetchAsync,
         };
 
     /// <summary>占位 key 文本等同于没填。</summary>

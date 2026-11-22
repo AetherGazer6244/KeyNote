@@ -112,6 +112,7 @@ public sealed partial class QuotaPage : Page, IRefreshable
         "zhipu" => "\uE943",
         "minimax" => "\uE945",
         "opencode_go" => "\uE756",
+        "yuanxuai" => "\uE774",
         "relay" => "\uE968",
         _ => "\uE774",
     };

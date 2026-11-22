@@ -23,7 +23,7 @@
   - 桌面悬浮小组件(可拖动)+ 任务栏低电贴片 + 低电托盘气泡提醒 + 续航估算
   - 电量样本入 keynote.db v7 `device_battery_samples`,可设保留期(30~730 天)
 - **AI 额度监控**(`KeyNote.Core.Quota`,自 AgentEye 并入)
-  - 8 类 provider 轮询(DeepSeek / 智谱 / MiniMax / OpenCode Go / SiliconFlow / OpenRouter / 通用 OpenAI 兼容 / 中转站),API Key DPAPI 加密存储
+  - 9 类 provider 轮询(DeepSeek / 智谱 / MiniMax / OpenCode Go / SiliconFlow / OpenRouter / 元序 / 通用 OpenAI 兼容 / 中转站),API Key DPAPI 加密存储
   - 额度页:provider 卡片(等级色点 + 进度条 + 重置倒计时 + 行内刷新)+ 右键暂停/编辑/删除 + 手风琴详情
   - 内置 provider 管理面板(URL / Key / Model 表单,自动识别类型、测试连通、拉取模型列表)
   - 桌面悬浮小组件(Acrylic 玻璃面)+ 跨阈值告警(60 分钟冷却 / 免打扰时段 / 恢复通知)

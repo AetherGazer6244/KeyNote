@@ -14,6 +14,7 @@ public static class ProviderInfo
         "opencode_go" => "https://opencode.ai",
         "siliconflow" => "https://cloud.siliconflow.cn",
         "openrouter" => "https://openrouter.ai",
+        "yuanxuai" => "https://token.yuanxuai.xyz",
         _ => null,
     };
 }

@@ -39,12 +39,13 @@ public sealed partial class ProviderManagerPane : UserControl
         new(L.T("kind.opencode_go"), "opencode_go"),
         new(L.T("kind.siliconflow"), "siliconflow"),
         new(L.T("kind.openrouter"), "openrouter"),
+        new(L.T("kind.yuanxuai"), "yuanxuai"),
         new(L.T("kind.generic_openai"), "generic_openai"),
     ];
 
     /// <summary>有官方默认端点的 kind(base_url 可留空,拉取层有 fallback)。</summary>
     private static readonly string[] OfficialKinds =
-        ["deepseek", "zhipu", "minimax", "opencode_go", "siliconflow", "openrouter"];
+        ["deepseek", "zhipu", "minimax", "opencode_go", "siliconflow", "openrouter", "yuanxuai"];
 
     public ProviderManagerPane() : this(QuotaService.Instance) { }
 
@@ -549,7 +550,9 @@ public sealed partial class ProviderManagerPane : UserControl
         // 名称自动取 URL 域名(留空时用类型名),重名追加 -2/-3;编辑时保持原名不变
         // (改名会让暂停集合与托盘最紧张行的索引错位)
         var name = _editing is not null ? TryGetName(_editing)
-            : UniqueName(baseUrl.Length > 0 ? NameFromUrl(baseUrl) : KindLabel(kind));
+            : UniqueName(kind == "yuanxuai"
+                ? KindLabel(kind)
+                : baseUrl.Length > 0 ? NameFromUrl(baseUrl) : KindLabel(kind));
 
         Dictionary<string, object?> entry;
         if (_editing is not null)

@@ -30,6 +30,7 @@ public static class ProviderTest
                 "relay" => await RelayProvider.FetchAsync(entry, ct),
                 "siliconflow" => await SiliconFlowProvider.FetchAsync(entry, ct),
                 "openrouter" => await OpenRouterProvider.FetchAsync(entry, ct),
+                "yuanxuai" => await YuanxuProvider.FetchAsync(entry, ct),
                 _ => await GenericOpenAi.FetchAsync(entry, ct),
             };
             if (payload.Error is not null)

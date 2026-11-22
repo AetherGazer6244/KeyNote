@@ -35,6 +35,7 @@ public static partial class Detect
             // 1.6.0 新增
             ("siliconflow", "siliconflow", "https://api.siliconflow.cn", "det.urlSiliconflow"),
             ("openrouter.ai", "openrouter", "https://openrouter.ai", "det.urlOpenrouter"),
+            ("yuanxuai.xyz", "yuanxuai", YuanxuProvider.DefaultBaseUrl, "det.urlYuanxu"),
         ];
 
     public static DetectOutcome Run(string key = "", string hintUrl = "")

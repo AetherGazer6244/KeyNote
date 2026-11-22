@@ -2,6 +2,14 @@
 
 本文件记录 KeyNote 的版本变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.7.0] - 2026-11-22
+
+新增元序钱包余额监控。
+
+### 新增
+
+- **元序 provider**：Bearer Key 查询 `/v1/usage`，展示钱包余额、今日与累计实际消耗和请求数；自动读取 OpenAI 兼容模型列表，Key 仍由 DPAPI 加密存储
+
 ## [1.6.2] - 2026-11-22
 
 修复 AI 额度 provider 删除时确认与写盘反馈问题。
