@@ -80,7 +80,13 @@ public sealed class QuotaService
 
     public void SetResults(List<ProviderResult> results)
     {
-        Results = results;
+        var configuredNames = Providers()
+            .OfType<Dictionary<string, object?>>()
+            .Select(p => p.TryGetValue("name", out var n) && n is string ns && ns.Length > 0
+                ? ns
+                : $"{(p.TryGetValue("kind", out var k) && k is string ks ? ks : "")}-provider")
+            .ToHashSet(StringComparer.Ordinal);
+        Results = results.Where(r => configuredNames.Contains(r.Name)).ToList();
         ResultsChanged?.Invoke();
     }
 

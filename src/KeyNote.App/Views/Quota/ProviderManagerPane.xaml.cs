@@ -5,6 +5,7 @@ using KeyNote.Core.Quota.Providers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.System;
 
 namespace KeyNote.App.Views;
 
@@ -126,18 +127,48 @@ public sealed partial class ProviderManagerPane : UserControl
     private async void BtnDelete_Click(object sender, RoutedEventArgs e)
     {
         var p = SelectedProvider();
-        if (p is null) return;
-        await ConfirmDeleteAsync(_app, this, TryGetName(p));
+        if (p is null)
+        {
+            ListHint.Text = L.T("delete.notSelected");
+            ListHint.Visibility = Visibility.Visible;
+            return;
+        }
+        try
+        {
+            if (await ConfirmDeleteAsync(_app, this, TryGetName(p)))
+            {
+                ListHint.Text = L.F("delete.done", TryGetName(p));
+                ListHint.Visibility = Visibility.Visible;
+            }
+        }
+        catch (Exception ex)
+        {
+            KeyNote.Core.Utils.CrashLog.Write("quota.providerDelete", ex);
+        }
     }
+
+    private void ProviderList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        ListHint.Visibility = Visibility.Collapsed;
 
     private static string TryGetName(Dictionary<string, object?> p) =>
         p.TryGetValue("name", out var n) && n is string ns ? ns : "";
 
     /// <summary>危险删除:输入 provider 名称确认(对齐 Python confirm_delete)。</summary>
-    public static async Task ConfirmDeleteAsync(
+    public static async Task<bool> ConfirmDeleteAsync(
         QuotaService app, FrameworkElement host, string name)
     {
-        var input = new TextBox { PlaceholderText = L.F("delete.confirmInput", name) };
+        var input = new TextBox
+        {
+            Text = name,
+            PlaceholderText = L.F("delete.confirmInput", name),
+        };
+        var mismatch = new TextBlock
+        {
+            Text = L.F("delete.mismatch", name),
+            TextWrapping = TextWrapping.Wrap,
+            Visibility = Visibility.Collapsed,
+            Foreground = QuotaRes.Brush(host, "AeErrorBrush"),
+        };
         var dialog = new ContentDialog
         {
             XamlRoot = host.XamlRoot,
@@ -153,32 +184,118 @@ public sealed partial class ProviderManagerPane : UserControl
                         TextWrapping = TextWrapping.Wrap,
                     },
                     input,
+                    mismatch,
                 },
             },
             PrimaryButtonText = L.T("api.delete"),
             CloseButtonText = L.T("form.cancel"),
-            DefaultButton = ContentDialogButton.Close,
+            DefaultButton = ContentDialogButton.Primary,
         };
-        var result = await dialog.ShowAsync();
-        if (result != ContentDialogResult.Primary) return;
-        if (input.Text.Trim() != name) return;
-        var providers = ConfigStore.GetList(app.Cfg, "providers");
-        var target = providers.OfType<Dictionary<string, object?>>()
-            .FirstOrDefault(p => TryGetName(p) == name);
-        if (target is null) return;
-        providers.Remove(target);
-        app.Paused.Remove(name);
-        if (!app.TrySaveCfg())
-            return; // 写盘失败:列表不动,让用户看到配置没存下来
+        input.TextChanged += (_, _) =>
+        {
+            mismatch.Visibility = NamesMatch(input.Text, name)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        };
+        dialog.Loaded += (_, _) =>
+        {
+            input.Focus(FocusState.Programmatic);
+            input.SelectAll();
+        };
+        var confirmedByEnter = false;
+        input.KeyDown += (_, e) =>
+        {
+            if (e.Key != VirtualKey.Enter) return;
+            e.Handled = true;
+            if (!NamesMatch(input.Text, name))
+            {
+                mismatch.Visibility = Visibility.Visible;
+                return;
+            }
+            confirmedByEnter = true;
+            dialog.Hide();
+        };
+        dialog.PrimaryButtonClick += (_, e) =>
+        {
+            if (NamesMatch(input.Text, name)) return;
+            e.Cancel = true;
+            mismatch.Visibility = Visibility.Visible;
+        };
+
         try
         {
-            var baseUrl = target.TryGetValue("base_url", out var b) && b is string bs ? bs : "";
-            app.Cache.RemoveProviderEntries(baseUrl, PlainKeyOf(target));
-            app.Cache.LogProviderDeleted(name, baseUrl);
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary && !confirmedByEnter) return false;
+            if (!NamesMatch(input.Text, name)) return false;
+
+            var providers = ConfigStore.GetList(app.Cfg, "providers");
+            var target = providers.OfType<Dictionary<string, object?>>()
+                .FirstOrDefault(p => TryGetName(p) == name);
+            if (target is null)
+            {
+                await ShowDeleteErrorAsync(host, L.T("delete.notFound"));
+                return false;
+            }
+
+            var index = providers.IndexOf(target);
+            var wasPaused = app.Paused.Contains(name);
+            providers.RemoveAt(index);
+            app.Paused.Remove(name);
+            string? saveError;
+            try
+            {
+                saveError = app.SaveCfgError();
+            }
+            catch (Exception ex)
+            {
+                providers.Insert(index, target);
+                if (wasPaused) app.Paused.Add(name);
+                await ShowDeleteErrorAsync(host, L.F("delete.errUnexpected", ex.Message));
+                return false;
+            }
+            if (saveError is not null)
+            {
+                providers.Insert(index, target);
+                if (wasPaused) app.Paused.Add(name);
+                await ShowDeleteErrorAsync(host, L.F("delete.errSave", saveError));
+                return false;
+            }
+
+            try
+            {
+                var baseUrl = target.TryGetValue("base_url", out var b) && b is string bs ? bs : "";
+                app.Cache.RemoveProviderEntries(baseUrl, PlainKeyOf(target));
+                app.Cache.LogProviderDeleted(name, baseUrl);
+            }
+            catch { /* 缓存清理失败不拦删除主流程 */ }
+            app.SetResults(app.Results.Where(r => r.Name != name).ToList());
+            _ = app.Poller.RefreshNowAsync();
+            return true;
         }
-        catch { /* 缓存清理失败不拦删除主流程 */ }
-        app.SetResults(app.Results.Where(r => r.Name != name).ToList());
-        _ = app.Poller.RefreshNowAsync();
+        catch (Exception ex)
+        {
+            KeyNote.Core.Utils.CrashLog.Write("quota.providerDelete", ex);
+            await ShowDeleteErrorAsync(host, L.F("delete.errUnexpected", ex.Message));
+            return false;
+        }
+    }
+
+    private static bool NamesMatch(string typed, string expected) =>
+        string.Equals(NormalizeName(typed), NormalizeName(expected), StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizeName(string value) =>
+        string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    private static async Task ShowDeleteErrorAsync(FrameworkElement host, string message)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = host.XamlRoot,
+            Title = L.T("delete.errorTitle"),
+            Content = message,
+            CloseButtonText = L.T("form.cancel"),
+        };
+        await dialog.ShowAsync();
     }
 
     private static string PlainKeyOf(Dictionary<string, object?> p) => ConfigStore.PlainKey(p);

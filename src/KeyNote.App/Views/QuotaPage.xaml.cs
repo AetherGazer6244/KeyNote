@@ -356,8 +356,18 @@ public sealed partial class QuotaPage : Page, IRefreshable
         miEdit.Click += (_, _) => ShowManager(row.Name);
         menu.Items.Add(miEdit);
         var miDelete = new MenuFlyoutItem { Text = L.T("api.delete") };
-        miDelete.Click += async (_, _) => await ProviderManagerPane.ConfirmDeleteAsync(
-            _app, this, row.Name);
+        miDelete.Click += async (_, _) =>
+        {
+            try
+            {
+                if (await ProviderManagerPane.ConfirmDeleteAsync(_app, this, row.Name))
+                    FooterUpdated.Text = L.F("delete.done", row.Name);
+            }
+            catch (Exception ex)
+            {
+                Core.Utils.CrashLog.Write("quota.providerDelete", ex);
+            }
+        };
         menu.Items.Add(miDelete);
         card.ContextFlyout = menu;
 

@@ -222,6 +222,13 @@ public static class L
         ["delete.title"] = "删除 {0}",
         ["delete.confirmInput"] = "输入 {0} 以确认",
         ["delete.body"] = "此操作会从配置里移除该 provider 与其 key。",
+        ["delete.mismatch"] = "名称不匹配，请确认输入「{0}」。",
+        ["delete.notSelected"] = "请先选中要删除的 provider。",
+        ["delete.notFound"] = "配置中已找不到这个 provider，请刷新列表后重试。",
+        ["delete.errorTitle"] = "删除失败",
+        ["delete.errSave"] = "配置写盘失败，已恢复原 provider：{0}",
+        ["delete.errUnexpected"] = "删除时发生错误：{0}",
+        ["delete.done"] = "已删除 {0}",
 
         // —— 更新 ——
         ["update.checking"] = "正在检查更新…",
