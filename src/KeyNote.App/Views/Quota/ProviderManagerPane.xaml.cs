@@ -284,8 +284,13 @@ public sealed partial class ProviderManagerPane : UserControl
     private static bool NamesMatch(string typed, string expected) =>
         string.Equals(NormalizeName(typed), NormalizeName(expected), StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// 名称归一:去掉全部空白 + 忽略大小写。
+    /// 中文 provider 名常带空格(「智谱 GLM」),中文输入法漏打空格是常态,
+    /// 按空白折叠仍会漏判("智谱GLM" ≠ "智谱 GLM"),所以这里直接剔除所有空白。
+    /// </summary>
     private static string NormalizeName(string value) =>
-        string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        string.Concat(value.Where(c => !char.IsWhiteSpace(c)));
 
     private static async Task ShowDeleteErrorAsync(FrameworkElement host, string message)
     {
